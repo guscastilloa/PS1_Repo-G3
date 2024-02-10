@@ -9,7 +9,9 @@
 
 source("scripts/00_packages.R")
 
-
+############################################################################-
+# 1. Web scraping ----
+############################################################################
 
 # With RSelenium
 remrD$setTimeout(type = "page load",
@@ -18,8 +20,8 @@ remrD$setTimeout(type = "page load",
 
 myurl <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/"
 
-# l <- list()
-for (i in 6:10){
+l <- list()
+for (i in 1:10){
   the_url <- paste0(myurl, "page",i,".html")
   print(the_url)
   
@@ -46,11 +48,24 @@ for (i in 6:10){
   remrD$close()
   rD$server$stop()
   
-  cat("\n\n")
+  cat("............................ End iteration................... \n\n")
 }
 
-
-
 write_rds(l, file = "stores/geih_list.rds")
+
+############################################################################-
+# 2. Build dataset and export----
+############################################################################
+t <- 0
+for (i in 1:10){
+  t <- t+nrow(l[[i]][[1]])
+  print(t)
+}
+t
+b <- bind_rows(l, .id = "column_label")
+
+# Check row binds and export
+nrow(b)==t
+arrow::write_parquet(b, sink = "stores/geih.parquet")
 
 
