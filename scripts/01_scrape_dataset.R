@@ -65,7 +65,7 @@ write_rds(level_labels, file = "stores/level_labels.rds")
 theurl <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 site <- read_html(theurl)
 variable_labels <-  site %>% html_table() %>% .[[1]]
-write_rds(variable_labels, file = "stores/level_labels.rds")
+write_rds(variable_labels, file = "stores/variable_labels.rds")
 
 ############################################################################-
 # 2. Build dataset and export----
