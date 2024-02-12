@@ -7,11 +7,13 @@
 #   Scrape the dataset for PS1 from Ignacio's website.
 ##############################################################################-
 
+# Prepare workspace
 source("scripts/00_packages.R")
+gc()
 
 ############################################################################-
 # 1. Web scraping ----
-############################################################################
+############################################################################-
 
 # With RSelenium
 remrD$setTimeout(type = "page load",
@@ -51,11 +53,23 @@ for (i in 1:10){
   cat("............................ End iteration................... \n\n")
 }
 
+# Export temproal list
 write_rds(l, file = "stores/geih_list.rds")
+
+# Scrape and save leve labels and variable labels
+theurl <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/labels.html"
+site <- read_html(theurl)
+level_labels <-  site %>% html_table() %>% .[[1]]
+write_rds(level_labels, file = "stores/level_labels.rds")
+
+theurl <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
+site <- read_html(theurl)
+variable_labels <-  site %>% html_table() %>% .[[1]]
+write_rds(variable_labels, file = "stores/level_labels.rds")
 
 ############################################################################-
 # 2. Build dataset and export----
-############################################################################
+############################################################################-
 t <- 0
 for (i in 1:10){
   t <- t+nrow(l[[i]][[1]])
