@@ -3,7 +3,7 @@ title: 'Problem Set 1: Predicting Income'
 subtitle: 'Big Data y Machine Learning para Economía Aplicada'
 author:  
         - Gustavo Adolfo Castillo Álvarez (201812166), 
-        - Alexander Almeida Ramírez (), 
+        - Alexander Almeida Ramírez (202225165), 
         - Jorge Luis Congacha Yunda (201920042) y 
         - Jaime Orlando Buitrago González (200612390)
 date: "03 de marzo de 2024"
