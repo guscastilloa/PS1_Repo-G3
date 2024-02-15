@@ -24,16 +24,36 @@ output:
     fig_width: 3
     fig_height: 2
     fig_caption: true
-    
+
 bibliography: References.bib  
 ---
 
 ```{r setup, include=FALSE}
+require(here)
 knitr::opts_chunk$set(echo = TRUE)
 #source("../scripts/00_packages.R", local = knitr::knit_global())
-library(knitr)
 library(ggplot2)
+here::set_here(path = "../")
+source(here("scripts","00_packages.R"), local = knitr::knit_global())
 ```
+
+```{r prepare_data, echo=FALSE}
+db <- arrow::read_parquet("../stores/geih.parquet")
+clean_variables <- function(df){
+  out_df <- df %>% mutate(
+    woman=1-sex,
+    woman=factor(woman, levels=c(0,1),labels=c('Hombre','Mujer')),
+    maxEducLevel=factor(
+      maxEducLevel,levels=1:7),
+    uid=paste0(directorio,secuencia_p,orden),
+    oficio=factor(oficio, levels=as.double(names(table(db$oficio))))
+    )
+  out_df
+  }
+
+db <- clean_variables(db)
+```
+
 
 # Introducción
 
@@ -42,11 +62,51 @@ library(ggplot2)
 
 # Datos
 
+De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
+
+
+
 # Perfiles de salario por edad
 
 # Brechas de ingreso por sexo
 
 # Predicción de salarios
+
+La meta es predecir la brecha salarial del logaritmo del ingreso. Comenzamos estimando el modelo más sencillo de todos, es decir, el modelo univariado:
+
+
+\begin{equation}
+\ln (w) = \beta_1 + \beta_2 Mujer+u
+  \label{gap0}
+\end{equation}
+
+
+
+```{r code_gap, echo=FALSE}
+gap0 <- lm('log(y_ingLab_m)~woman', data = db)
+gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
+# gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
+mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
+```
+
+```{r out_gap0, echo=FALSE, results='asis'}
+stargazer(gap0,gap1, 
+          title = "Estimando brecha de género",
+          type='latex', dep.var.labels = "Ln Salario",
+          omit = c('oficio','maxEducLevel'), 
+          notes = "Controles: oficio, maxEduclevel", 
+          header = FALSE)
+```
+
+El coeficiente $\beta_2<0$ indica que las mujeres, en promedio y ceteris praibus, reciben un salario mensual `r exp(gap0$coefficients['womanMujer'][[1]])`  menos ingresos que los hombres. 
+
+## Estimación con FWL
+
+En la primera etapa, *partialling-out*, ejecutamos dos regresiones. Suponiendo que la variable de interés es la dicotómica de $Mujer$, entonces en la primera regresión buscamos estimar `woman~x1+x2+...`, donde las `xi` son todas aquellas demás variables de control para corregir el potencial  sesgo de variable omitida. Luego nos quedamos con los residuales `woman_res`, y ejecutamos una segunda regresión en la que estimemos `log_wage~x1+x2...`, y guardamos estos residuales, `log_wage_res`. 
+
+Finalmente ejecutamos la segunda regresión univariada `log_wage_res~woman_res` y en principio deberíamos obtener el mismo coeficiente de haber ejecutado el modelo completo.
+
+
 
 # Referencias bibliográficas
 
