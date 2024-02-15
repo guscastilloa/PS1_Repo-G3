@@ -1,6 +1,6 @@
 ---
 title: 'Problem Set 1: Predicting Income'
-subtitle: 'Grupo 3'
+subtitle: 'Big Data y Machine Learning para Economía Aplicada'
 author:  
         - Gustavo Adolfo Castillo Álvarez (201812166), 
         - Alexander Almeida Ramírez (), 
@@ -10,19 +10,35 @@ date: "03 de marzo de 2024"
 fontsize: 11pt
 geometry: margin=1in
 documentclass: article
+papersize: letter
+lang: es
 
+header-includes:
+    - \usepackage[utf8]{inputenc}
+    - \usepackage{floatrow}
+    - \floatsetup[figure]{capposition=top}
+    
 output: 
   pdf_document:
-    citation_package: natbib
+    number_sections: true
+    fig_width: 3
+    fig_height: 2
+    fig_caption: true
     
+bibliography: References.bib  
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-source("../scripts/00_packages.R", local = knitr::knit_global())
+#source("../scripts/00_packages.R", local = knitr::knit_global())
+library(knitr)
+library(ggplot2)
 ```
 
 # Introducción
+
+@R-base
+@geih
 
 # Datos
 
@@ -34,6 +50,7 @@ source("../scripts/00_packages.R", local = knitr::knit_global())
 
 # Referencias bibliográficas
 
+<div id="refs"></div>
 
 # Ejemplos
 
@@ -51,7 +68,7 @@ $$
 
 Para incluir gráficas
 
-```{r echo=FALSE, message=FALSE,file="../scripts/Code.R",out.width="50%",fig.align = 'center'}
-
+```{r echo=FALSE, message=FALSE,file="../scripts/Code.R",fig.align = 'center', fig.cap="Título de la gráfica", dpi=300}
 ```
+\begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
