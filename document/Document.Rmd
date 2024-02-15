@@ -1,0 +1,57 @@
+---
+title: 'Problem Set 1: Predicting Income'
+subtitle: 'Grupo 3'
+author:  
+        - Gustavo Adolfo Castillo Álvarez (201812166), 
+        - Alexander Almeida Ramírez (), 
+        - Jorge Luis Congacha Yunda (201920042) y 
+        - Jaime Orlando Buitrago González (200612390)
+date: "03 de marzo de 2024"
+fontsize: 11pt
+geometry: margin=1in
+documentclass: article
+
+output: 
+  pdf_document:
+    citation_package: natbib
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("../scripts/00_packages.R", local = knitr::knit_global())
+```
+
+# Introducción
+
+# Datos
+
+# Perfiles de salario por edad
+
+# Brechas de ingreso por sexo
+
+# Predicción de salarios
+
+# Referencias bibliográficas
+
+
+# Ejemplos
+
+Para incrustar código y resultados de la consola
+
+```{r cars}
+summary(cars)
+```
+
+Para incluir ecuaciones
+
+$$
+w=f(X)+u
+$$
+
+Para incluir gráficas
+
+```{r echo=FALSE, message=FALSE,file="../scripts/Code.R",out.width="50%",fig.align = 'center'}
+
+```
+

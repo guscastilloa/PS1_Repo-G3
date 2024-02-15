@@ -22,7 +22,7 @@ p_load(tidyverse , # tidy-data
        readxl, # Import Excel spreadsheet files
        fixest, #  Fast Fixed-Effects Estimations
        viridis, # color pallete
-       ggsn, # north star and scale bar
+       #ggsn, # north star and scale bar
        ggpubr, # ggexport function
        lubridate, # calculate diff between years function
        gridExtra, # grid.arrange function 
@@ -40,5 +40,5 @@ p_load(tidyverse , # tidy-data
 filter = dplyr::filter
 select = dplyr::select
 `%no%` = Negate(`%in%`)
-scalebar = ggsn::scalebar
+#scalebar = ggsn::scalebar
 
