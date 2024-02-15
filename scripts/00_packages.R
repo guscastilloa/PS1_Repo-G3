@@ -27,6 +27,8 @@ p_load(tidyverse , # tidy-data
        lubridate, # calculate diff between years function
        gridExtra, # grid.arrange function 
        spdep,
+       stargazer, # View regression tables
+       here, # Fix root directories
        haven, # Import stata databases
        labelled, # tools for labelled data
        rlang, # Toolbos for working with base types and core R features
