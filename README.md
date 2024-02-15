@@ -1,6 +1,6 @@
 # Problem Set 1: Predicting Income. Big Data y Machine Learning para Economía Aplicada
 
-Este es el repositorio del Grupo 3, conformado por Gustavo Adolfo Castillo Álvarez (201812166), Alexander Almeida Ramírez (), Jorge Luis Congacha Yunda (201920042) y Jaime Orlando Buitrago González (200612390).
+Este es el repositorio del Grupo 3, conformado por Gustavo Adolfo Castillo Álvarez (201812166), Alexander Almeida Ramírez (202225165), Jorge Luis Congacha Yunda (201920042) y Jaime Orlando Buitrago González (200612390).
 
 Este repositorio contiene tres carpetas:
 
