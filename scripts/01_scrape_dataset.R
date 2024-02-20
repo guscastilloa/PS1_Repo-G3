@@ -53,7 +53,7 @@ for (i in 1:10){
   cat("............................ End iteration................... \n\n")
 }
 
-# Export temproal list
+# Export temporal list
 write_rds(l, file = "stores/geih_list.rds")
 
 # Scrape and save leve labels and variable labels
