@@ -80,6 +80,9 @@ La GEIH y su módulo sobre la *Medición de Pobreza Monetaria y Desigualdad* est
 
 En la página web se encuentran 10 tablas en formato HTML, las cuales contienen en total las 32.177 observaciones que componen la muestra de personas para Bogotá de la GEIH para 2018, con 179 variables (21 variables adicionales a las presentes en la base de datos del ANDA). Al encontrarse en un formato estructurado (tabla HTML), se realizó el *web scrpaing* haciendo uso del paquete `RSelenium` de `RStudio`, con el cual se automatiza la consulta de cada una de los 10 hipervínculos de la página web, se identifica la tabla en HTML, se almacena y posteriormente se consolida una sola base de datos con las características anteriormente mencionadas.
 
+Como complemento, se descargaron y unieron las bases de datos de la GEIH de 2018 [@dane], de tal manera que se obtuviesen variables complementarias para el desarrollo del Problem Set. Más específicamente, los años de escolaridad, la rama de actividad \footnote{Código a dos dígitos de la Clasificación Industrial Internacional Uniforme de todas las actividades Económicas (CIIU).} y la pregunta sobre la posición ocupacional de las personas ocupadas. De esta manera, se obtuvieron variables complementarias como escolaridad como variable continua, experiencia laboral \footnote{ Variable *proxy* construida como  Edad-Años de escolaridad-Años de ingreso al sistema educativo (6 años)}, sector económico y posición ocupacional.
+
+Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos.
 
 De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
 
