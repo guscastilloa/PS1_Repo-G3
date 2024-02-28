@@ -36,7 +36,8 @@ p_load(tidyverse , # tidy-data
        RSelenium, # For scraping,
        rvest, # for web scraping
        arsenal, # To compare dataframes
-       tools)
+       tools, 
+       arrow)
 
 # solve package conflicts
 filter = dplyr::filter
