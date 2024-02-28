@@ -61,3 +61,35 @@ M <- cor(db_missing)
 install.packages("corrplot")
 library(corrplot)
 corrplot(M) 
+
+#Vamos a hacer lo mismo con los ocupados para ver si podemos reemplazar algunos 
+#valores que son missings values. 
+db_missing <-  db_missing %>%  select(which(apply(db_missing, 2, sd) > 0))
+
+#Vamos a lidiar con los valores faltantes de horas trabajadas aplicándole un 
+#cero a esta variable. 
+geih_select <- geih_select  %>%
+  mutate(totalHoursWorked = ifelse(ocu == 0, 0, hoursWorkUsual))
+
+#Cómo vamos a lidiar con los missings que existen en los salarios? 
+dummy<- geih_select %>% filter(ocu== 1)
+vis_miss(geih_select) #Todavía existen un 11% de valores que son missing y que 
+                #tenemos que solucionar 
+
+#Revisando, podríamos reemplazar por ceros a las personas que no son ocupadas. 
+#y eliminar los ingresos de aquellos que están ocupados. Finalmente, eliminar 
+#a todos aquellos que tienen missings values mayores a cero. 
+geih_select <- geih_select  %>%
+  mutate(y_total_m_ha = ifelse(ocu == 0, 0, hoursWorkUsual))
+
+#Eliminar aquellos que tienen ingresos superiores al 99% (por salarios)
+geih_select<-geih_select %>% 
+  mutate(y_total_m_ha= ifelse(y_total_m_ha> quantile(y_total_m_ha, .99), 
+                              NA, y_total_m_ha))
+
+#Los eliminamos debido a que hay individuos que tienen salarios muy altos, lo cual 
+#puede afectar nuestras estimaciones. 
+
+#Generar nuevas variables (edad al cuadrado) y el los salarios en logaritmo. 
+geih_select<- geih_select  %>% mutate(age2=age^2)
+geih_select <- geih_select  %>% mutate(ln_wage = log(y_total_m_ha))
