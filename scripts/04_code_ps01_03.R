@@ -14,7 +14,7 @@ gc()
 #library(arrow)
 
 #Cargar la base de datos 
-datos_geih<-read_parquet("stores/geih.parquet")
+datos_geih<-read_parquet("stores/db.parquet")
 View(datos_geih)
 
 #Definir los posibles predictores de la base de datos: 
@@ -29,115 +29,69 @@ geih_select <- datos_geih  %>% select(y_total_m_ha,
                                        ocu,
                                        maxEducLevel)
 
-#install.packages("skimr") Igual con estos paquetes que detectan valores missings
-#library(skimr)
-#Verificar la información de edad 
-db_miss <- skim(geih_select) %>% select( skim_variable, n_missing)
-Nobs= nrow(geih_select)
-db_miss<- db_miss%>% mutate(p_missing= n_missing/Nobs)
-
-
-#Gráfico con los missings 
-ggplot(tail(db_miss, 40), aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
-  coord_flip() +
-  labs(title = "N Missing Per Variable", x = "Var Name", y = "Missings") +
-  theme(axis.text = element_text(size = 8))
-
-#Tenemos que hay un porcentaje de 48% de valores missings en horas trabajadas y 
-#en el ingreso por hora. 
-install.packages("visdat")
+#Tenemos que un 11% de valores missings en horas trabajadas y en el ingreso por hora. 
+#install.packages("visdat")
 library(visdat)
-vis_miss(geih_select) #pregunta, cómo podemos hacer para imputar estos missings. 
-vis_miss() #
+vis_miss(geih_select)  
 
-
-#Quiero saber si hay correlación entre las variables missings 
-db_missing <- geih_select %>% mutate_all(~ifelse(!is.na(.), 1, 0))
-## drop  variables with not missing or  with all missing.
-
-db_missing <-  db_missing %>%  select(which(apply(db_missing, 2, sd) > 0))
-M <- cor(db_missing)
-install.packages("corrplot")
-library(corrplot)
-corrplot(M) 
-
-#Vamos a hacer lo mismo con los ocupados para ver si podemos reemplazar algunos 
-#valores que son missings values. 
-db_missing <-  db_missing %>%  select(which(apply(db_missing, 2, sd) > 0))
-
-#Vamos a lidiar con los valores faltantes de horas trabajadas aplicándole un 
-#cero a esta variable. 
-geih_select <- geih_select  %>%
-  mutate(totalHoursWorked = ifelse(ocu == 0, 0, hoursWorkUsual))
-
-#Cómo vamos a lidiar con los missings que existen en los salarios? 
-dummy<- geih_select %>% filter(ocu== 1)
-vis_miss(geih_select) #Todavía existen un 11% de valores que son missing y que 
-                #tenemos que solucionar 
-
-#Revisando, podríamos reemplazar por ceros a las personas que no son ocupadas. 
-#y eliminar los ingresos de aquellos que están ocupados. Finalmente, eliminar 
-#a todos aquellos que tienen missings values mayores a cero. 
-geih_select <- geih_select  %>%
-  mutate(y_total_m_ha = ifelse(ocu == 0, 0, hoursWorkUsual))
-
-#Eliminar aquellos que tienen ingresos superiores al 99% (por salarios)
-geih_select<-geih_select %>% 
-  mutate(y_total_m_ha= ifelse(y_total_m_ha> quantile(y_total_m_ha, .99), 
-                              NA, y_total_m_ha))
-
-#Los eliminamos debido a que hay individuos que tienen salarios muy altos, lo cual 
-#puede afectar nuestras estimaciones. 
-
-#Generar nuevas variables (edad al cuadrado) y el los salarios en logaritmo. 
-geih_select<- geih_select  %>% mutate(age2=age^2)
+geih_select<- geih_select  %>% mutate(agesqr=age^2)
 geih_select <- geih_select  %>% mutate(ln_wage = log(y_total_m_ha))
 
-#ESTADÍSTICAS DESCRIPTIVAS ----------------------------------------------------
-#Descriptive statistics of continuos and dicotomic variables
+#Estadísticas descriptivas 
+#Estadisticas descriptivas de las variables que vamos a analizar
 summary_table <- stargazer(data.frame(geih_select), exclude = c("oficio", "relab"), 
                            title = "Variables incluidas en nuestra muestra seleccionada", 
                            align = TRUE, omit.stat = c("n"))
 
 #Export descriptive analysis of selected variables in latex
-writeLines(summary_table, "stores/summary_table.tex")
+writeLines(summary_table, "views/summary_table.tex")
 
-#Descriptive statistics of categorical variables
+#Estadísticas descriptivas de las variables categóricas 
 maxEducLevel<-ggplot(geih_select, aes(x = `maxEducLevel`)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the Maximum Educational Level Attained")
-# Export ggplot as PNG
-ggsave("/stores/maxEducLevel.png", plot = maxEducLevel, width = 6, height = 4,
+  xlab("Nivel de educación") + ylab("Frecuencia")
+  ggtitle("Nivel educativo máximo alcanzado")
+
+# Exportar la gráfica 
+ggsave("views/maxEducLevel.png", plot = maxEducLevel, width = 6, height = 4,
        dpi = 300)
 
+#Exportar gráfica de análisis de oficio 
 oficio<-ggplot(geih_select, aes(x = `oficio`)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the Occupation")
+  ggtitle("Frecuencia de ocupación")
 # Export ggplot as PNG
-ggsave("stores/oficio.png", plot = oficio, width = 6, height = 4, dpi = 300)
+ggsave("views/oficio.png", plot = oficio, width = 6, height = 4, dpi = 300)
 
+#Análisis del tipo de ocupación 
 relab<-ggplot(geih_select, aes(x = `relab`)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the type of occupation")
+  ggtitle("Análisis del tipo de ocupación")
 # Export ggplot as PNG
-ggsave("stores/relab.png", plot = relab, width = 6, height = 4, dpi = 300)
+ggsave("views/relab.png", plot = relab, width = 6, height = 4, dpi = 300)
 
 
-
-
-#REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u -------------------------
-#Regress
-reg_age <- lm(ln_wage ~ age + age2, geih_select)
+#REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u (también le vamos a agregar
+#algunas variables explicativas adicionales)
+reg_age <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+age+sex+oficio+relab+
+                college+ ocu+ maxEducLevel, geih_select)
 summary(reg_age)
 
 #Generate the LaTeX code using the stargazer function and store it in a variable
-regression_table <- stargazer(reg_age, title = "Regression Results", align = TRUE, omit.stat = c("ser", "f", "adj.rsq"))
+regression_table<- stargazer(reg_age,
+           title = "Resultados de la regresion", 
+                              align = TRUE, 
+                              keep.stat = c("n", "rsq", "adj.rsq"),
+                              keep=c("age","agesqr"),
+                              dep.var.labels = "Logaritmo del Salario",
+                              covariate.labels = c("Edad", "Edad al cuadrado")
+                              ,out = "views/fit.tex")
 
-
+# Reemplazar "Observations" con "Observaciones"
+regression_table<- gsub("Observations", "Observaciones", regression_table)
 
 
 #BOOTSTRAP to construct the confidence intervals -------------------------------
