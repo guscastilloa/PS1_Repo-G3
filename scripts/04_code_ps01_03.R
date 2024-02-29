@@ -10,6 +10,7 @@ rm (list=ls())
 source("scripts/00_packages.R")
 gc()
 
+p_load("boot")
 #install.packages("arrow") ya está este paquete instalado en el 00 de paquetes? 
 #library(arrow)
 
@@ -29,13 +30,18 @@ geih_select <- datos_geih  %>% select(y_total_m_ha,
                                        ocu,
                                        maxEducLevel)
 
+geih_select<-na.omit(geih_select)
 #Tenemos que un 11% de valores missings en horas trabajadas y en el ingreso por hora. 
 #install.packages("visdat")
 library(visdat)
 vis_miss(geih_select)  
 
-geih_select<- geih_select  %>% mutate(agesqr=age^2)
+geih_select<- geih_select  %>% mutate(agesqr=age*age)
 geih_select <- geih_select  %>% mutate(ln_wage = log(y_total_m_ha))
+
+#Eliminar los valores missings en el ingroso por hora (para poder ejecutar 
+#correctamente el bootstrap)
+
 
 #Estadísticas descriptivas 
 #Estadisticas descriptivas de las variables que vamos a analizar
@@ -90,30 +96,44 @@ regression_table<- stargazer(reg_age,
                               covariate.labels = c("Edad", "Edad al cuadrado")
                               ,out = "views/fit.tex")
 
+# Leer el contenido del archivo
+regression_table <- readLines("views/fit.tex")
+
 # Reemplazar "Observations" con "Observaciones"
-regression_table<- gsub("Observations", "Observaciones", regression_table)
+regression_table <- gsub("Observations", "Observaciones", regression_table)
+regression_table <- gsub("Adjusted R", "R ajustado", regression_table)
 
 
-#BOOTSTRAP to construct the confidence intervals -------------------------------
-#Define a function that will extract the coefficients from the model based on bootstrap samples
+# Escribir el contenido modificado de nuevo al archivo
+writeLines(regression_table, "views/fit.tex")
+
+
+#BOOTSTRAP para construir los intervalos de confianza---------------------------
+#Definir la función que espero extraer los coeficientes del modelo basado en 
+#muestras de bootstrap
+set.seed(1453)
 get_coefficients <- function(geih_selected, indices) {
-  fit <- lm(ln_wage ~ age + age2, data = geih_selected[indices, ])
+  fit <- lm(ln_wage ~ age + agesqr, data = geih_selected[indices, ])
   return(coef(fit))
 }
 
-#Use the boot function to perform the bootstrap procedure and calculate the confidence intervals
-##Set stype = "i" to obtain the percentile intervals
-boot_results <- boot(data = geih_selected, statistic = get_coefficients, R = 1000)
+#Usar la función boot para calcular los coeficientes de confianza 
+boot_results <- boot(data = geih_select, statistic = get_coefficients, R = 1000)
 confidence_intervals <- boot.ci(boot_results, type = "perc")
 
-#Obtain the confidence intervals
+#Obtener los intervalos de confianza 
 confidence_intervals_95 <- confidence_intervals$percent[, 4]
 
-#Plot of the estimated age-earnings profile
-geih_selected <- geih_selected  %>% mutate(yhat=predict(reg_age))
-summ = geih_selected %>%  
+#Realizar las estimaciones y exportar. 
+geih_select<- geih_select  %>% mutate(yhat=predict(reg_age))
+
+geih_select<-geih_select %>% mutate(mean_y = mean(ln_wage),
+ yhat_reg = mean(yhat))
+
+
+summ = geih_select %>%  
   group_by(
-    age, age2
+    age, agesqr
   ) %>%  
   summarize(
     mean_y = mean(ln_wage),
@@ -137,5 +157,6 @@ age_earnings_plot <- age_earnings_plot +
   geom_vline(xintercept = c(34.58, 49.45), linetype = "dashed", color = "red")
 
 # Export ggplot as PNG
-ggsave("stores/age_earnings_plot.png", plot = age_earnings_plot, width = 6, height = 4, dpi = 300)
+ggsave("stores/age_earnings_plot.png", plot = age_earnings_plot, width = 6, 
+       height = 4, dpi = 300)
 
