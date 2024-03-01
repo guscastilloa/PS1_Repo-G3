@@ -37,7 +37,8 @@ p_load(tidyverse , # tidy-data
        rvest, # for web scraping
        arsenal, # To compare dataframes
        tools, 
-       arrow)
+       arrow,
+       visdat)
 
 # solve package conflicts
 filter = dplyr::filter
