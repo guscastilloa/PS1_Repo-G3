@@ -13,10 +13,8 @@ gc()
 #library(arrow)
 
 #Cargar la base de datos 
-datos_geih1<-read_parquet("stores/geih18.parquet")
-
 datos_geih<-read_parquet("stores/geih.parquet")
-View(datos_geih1)
+View(datos_geih)
 
 ################################################################################
 # 1. limpieza de base de datos.
@@ -25,7 +23,8 @@ View(datos_geih1)
 #################################################################################
 #Definir los posibles predictores de la base de datos: 
 
-geih_select <- datos_geih  %>% select(y_total_m_ha, 
+geih_select <- datos_geih  %>% select(y_total_m_ha,
+                                      y_ingLab_m_ha,
                                       hoursWorkUsual,
                                       age,
                                       sex,
@@ -33,7 +32,17 @@ geih_select <- datos_geih  %>% select(y_total_m_ha,
                                       relab,
                                       college,
                                       ocu,
-                                      maxEducLevel)
+                                      maxEducLevel,
+                                      formal,
+                                      microEmpresa,
+                                      p6050,
+                                      p6210)
+
+geih_select <- geih_select %>% 
+                      rename(ocupacion=relab,
+                      educacion=p6210,
+                      edad=age,
+                      posicion= p6050) 
 
 #install.packages("skimr") Igual con estos paquetes que detectan valores missings
 #library(skimr)
@@ -97,42 +106,8 @@ geih_select<-geih_select %>%
 #puede afectar nuestras estimaciones. 
 
 #Generar nuevas variables (edad al cuadrado) y el los salarios en logaritmo. 
-geih_select<- geih_select  %>% mutate(age2=age^2)
+geih_select<- geih_select  %>% mutate(age2=edad^2)
 geih_select <- geih_select  %>% mutate(ln_wage = log(y_total_m_ha))
-view(ln_wage)
-
-#ESTADÍSTICAS DESCRIPTIVAS ----------------------------------------------------
-#Descriptive statistics of continuos and dicotomic variables
-summary_table <- stargazer(data.frame(geih_select), exclude = c("oficio", "relab"), 
-                           title = "Variables incluidas en nuestra muestra seleccionada", 
-                           align = TRUE, omit.stat = c("n"))
-
-#Export descriptive analysis of selected variables in latex
-writeLines(summary_table, "stores/summary_table.tex")
-
-#Descriptive statistics of categorical variables
-maxEducLevel<-ggplot(geih_select, aes(x = `maxEducLevel`)) +
-  geom_bar() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the Maximum Educational Level Attained")
-# Export ggplot as PNG
-ggsave("/stores/maxEducLevel.png", plot = maxEducLevel, width = 6, height = 4,
-       dpi = 300)
-
-oficio<-ggplot(geih_select, aes(x = `oficio`)) +
-  geom_bar() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the Occupation")
-# Export ggplot as PNG
-ggsave("stores/oficio.png", plot = oficio, width = 6, height = 4, dpi = 300)
-
-relab<-ggplot(geih_select, aes(x = `relab`)) +
-  geom_bar() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Frecuency analysis of the type of occupation")
-# Export ggplot as PNG
-ggsave("stores/relab.png", plot = relab, width = 6, height = 4, dpi = 300)
-
 
 ####################################################################################
 
@@ -150,7 +125,18 @@ table(geih_select$sex)
 reg1 <- lm(ln_wage ~ sex, data = geih_select)
 summary(reg1)
 
+stargazer(reg1, digits=3, align=TRUE, type="latex", out="views/4reg1.tex" , omit.stat = c("adj.rsq", "f", "ser"))
+
 #B/ Estimación de brecha salarial condicional incorporando variables de control como características similares de trabajadores y puestos de trabajo.
 
+reg2<-lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
+stargazer(reg2,type="text",digits=3 , omit.stat = c("adj.rsq", "f", "ser")) 
+summary(reg2)
 
 
+
+
+
+
+colnames(geih_select)
+summarytools::freq(geih_select$oficio, cumul=FALSE)
