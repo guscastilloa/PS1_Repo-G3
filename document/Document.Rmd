@@ -88,6 +88,9 @@ Finalmente, se filtró la base de datos con las personas mayores de 18 años, qu
 De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
 
 
+# Modelo
+El modelo 
+
 
 # Perfiles de salario por edad
 
