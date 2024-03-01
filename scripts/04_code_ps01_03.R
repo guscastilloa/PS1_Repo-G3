@@ -11,8 +11,6 @@ source("scripts/00_packages.R")
 gc()
 
 p_load("boot")
-#install.packages("arrow") ya está este paquete instalado en el 00 de paquetes? 
-#library(arrow)
 
 #Cargar la base de datos 
 datos_geih<-read_parquet("stores/db.parquet")
