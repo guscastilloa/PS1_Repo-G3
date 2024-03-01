@@ -30,8 +30,6 @@ geih_select <- datos_geih  %>% select(y_total_m_ha,
 
 geih_select<-na.omit(geih_select)
 #Tenemos que un 11% de valores missings en horas trabajadas y en el ingreso por hora. 
-#install.packages("visdat")
-library(visdat)
 vis_miss(geih_select)  
 
 geih_select<- geih_select  %>% mutate(agesqr=age*age)
