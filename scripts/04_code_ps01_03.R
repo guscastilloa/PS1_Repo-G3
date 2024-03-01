@@ -78,19 +78,24 @@ ggsave("views/relab.png", plot = relab, width = 6, height = 4, dpi = 300)
 
 #REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u (también le vamos a agregar
 #algunas variables explicativas adicionales)
-reg_age <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+age+sex+oficio+relab+
+reg_age_c <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+age+sex+oficio+relab+
                 college+ ocu+ maxEducLevel, geih_select)
-summary(reg_age)
+summary(reg_age_c)
+
+reg_age_sc <- lm(ln_wage ~ age + agesqr, geih_select)
+summary(reg_age_sc)
 
 #Generate the LaTeX code using the stargazer function and store it in a variable
-regression_table<- stargazer(reg_age,
+stargazer(reg_age_sc,reg_age_c,
            title = "Resultados de la regresion", 
                               align = TRUE, 
                               keep.stat = c("n", "rsq", "adj.rsq"),
                               keep=c("age","agesqr"),
-                              dep.var.labels = "Logaritmo del Salario",
-                              covariate.labels = c("Edad", "Edad al cuadrado")
-                              ,out = "views/fit.tex")
+                              dep.var.labels.include = FALSE,
+                              dep.var.caption  = "Logaritmo del salario",
+                              column.labels   = c("Con controles", "Sin controles"),
+                              covariate.labels = c("Edad", "Edad al cuadrado"),
+                              type="latex",out = "views/fit.tex")
 
 # Leer el contenido del archivo
 regression_table <- readLines("views/fit.tex")

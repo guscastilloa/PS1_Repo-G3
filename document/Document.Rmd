@@ -94,6 +94,39 @@ El modelo
 
 # Perfiles de salario por edad
 
+Para empezar a caracterizar los determinantes de los salarios, vamos a realizar 
+una estimación que explore la relación entre ingresos y edad. Existe literatura que 
+encuentra que los salarios tienden a seguir una distribución de u invertida, en la 
+que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los salarios (Skirbekk, 2004). Entre las 
+posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
+
+Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados 
+Ordinarios para analizar la relación entre salarios y edad: 
+
+$$
+log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
+$$
+Dónde $Salario_i$ corresponde a los ingresos asalariados + independientes total nominal por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar
+la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
+
+Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), decidimos hacer un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que agregamos son: horas trabajadas a la semana, el sexo de los individuos, ocupación, tipo de ocupación y su máximo nivel educativo. 
+
+
+En la tabla # se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión. 
+
+En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
+
+$$
+\partial{log(salario_i)}{Edad}=\beta_1 Edad +2 \beta_2 Edad
+$$
+
+Encontramos que la interpretación depende del nivel de edad que se analiza. Para realizar el análisis, estimamos la edad promedio de la base de datos (38 años). Encontramos que, para un individuo con una edad de 38 años, un año adicional está asociado con un aumento en el salario del 1.7%. 
+
+
+En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
+
+
+
 # Brechas de ingreso por sexo
 
 # Predicción de salarios
