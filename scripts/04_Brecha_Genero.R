@@ -121,19 +121,50 @@ geih_select <- geih_select[complete.cases(geih_select$ln_wage) & is.finite(geih_
 geih_select$sex <- ifelse(geih_select$sex == 1, 0, 1)
 table(geih_select$sex)
 
-# A| Estimación de la brecha salarial incondicional. Log(w)= β1 + β2Female + u
+# A) Estimación de la brecha salarial incondicional. Log(w)= β1 + β2Female + u
 reg1 <- lm(ln_wage ~ sex, data = geih_select)
 summary(reg1)
 
 stargazer(reg1, digits=3, align=TRUE, type="latex", out="views/4reg1.tex" , omit.stat = c("adj.rsq", "f", "ser"))
 
-#B/ Estimación de brecha salarial condicional incorporando variables de control como características similares de trabajadores y puestos de trabajo.
+#B) Estimación de brecha salarial condicional incorporando variables de control como características similares de trabajadores y puestos de trabajo.
 
 reg2<-lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
 stargazer(reg2,type="text",digits=3 , omit.stat = c("adj.rsq", "f", "ser")) 
 summary(reg2)
 
+# Estimamos la brecha salarial usando:
 
+# Eliminación de una fila con valores faltantes en todas las variables utilizadas en el modelo
+geih_select <- geih_select[complete.cases(geih_select[, c("sex", "posicion", "oficio", "ocupacion", "formal", "microEmpresa", "maxEducLevel", "edad")]), ]
+
+## i) Usamos FWL
+
+geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex)~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
+geih_select<- geih_select %>% mutate(log_wage_res=lm(ln_wage~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
+
+# Corremos una regresión con las anteriores dos regresiones
+
+reg3<- lm(log_wage_res~woman_res, geih_select)
+stargazer(reg3,type="text",digits=3 ) 
+stargazer(reg3, reg1 , digits=3, align=TRUE, type="latex", out="views/4reg3.tex" , omit.stat = c("adj.rsq", "f", "ser"))
+
+
+## ii) FWL con boostrap
+
+btrap<-function(data,index){
+  data<-data %>% mutate(woman_res=lm(as.numeric(sex)~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
+  data<-data %>% mutate(log_wage_res=lm(ln_wage~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
+  coef(lm(log_wage_res~woman_res, data = data, subset = index))[2]  # nos suministra el segundo coeficiente de la regresión lineal 
+}
+
+btrap(geih_select,1:nrow(geih_select))
+
+boot(geih_select, btrap, R = 2000) 
+
+
+
+ 
 
 
 
