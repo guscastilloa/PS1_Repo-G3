@@ -176,7 +176,7 @@ Encontramos que la interpretación depende del nivel de edad que se analiza. Par
 
 En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
 
-
+Escribir el peak + boostrap 
 
 # Brechas de ingreso por sexo
 
