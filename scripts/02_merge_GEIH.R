@@ -43,8 +43,8 @@ persona <- c("Desocupados",
 for (j in 1:12){  
   personas <- read.csv(paste0("stores/",j,"/Caracteristicas generales (personas).CSV"))
   personas <- personas%>%select(-c("OCI","DSI","INI"))
-
-for ( i in persona) {
+ 
+  for ( i in persona) {
   modulo <- read.csv(paste0("stores/",j,"/",i,".CSV"))
   modulo <- modulo%>%select(-c("HOGAR","AREA","CLASE","FEX_C","DPTO",
                              "ANO","MES","PERIODO","REGIS"))
@@ -53,7 +53,7 @@ for ( i in persona) {
               no.dups = TRUE,
               all = TRUE,
               suffixes = "")
-}
+  }
   if(j==1){
     geih <- personas
     common <- colnames(personas)

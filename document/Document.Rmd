@@ -61,9 +61,10 @@ Entre 1991 y 2019, el recaudo del impuesto a la renta aumentó en 7,1 puntos por
 
 Más aún para el 2019, el recaudo del impuesto de renta de las personas correspondió a tan sólo al 1,3\% del PIB colombiano según la @cepal. Este nivel de ingresos tributarios es considerablemente bajo y se debe al complejo sistema tributario que permite mayores exensiones y deducciones para quienes tienen ingresos más altos [@undp], al mismo tiempo que las políticas, factores psicológicos, coyunturas económicas y deficiencias administrativas favorecen la evasión y elusión de este impuesto sobre los ingresos [@ex].
 
-Cada reforma tributaria ha intentado mejorar los niveles de recaudo en los últimos años, así mismo, los cambios administrativos en la DIAN también han contribuido a este propósito, buscando un sistema tributario más efciente y progresivo, ya que se cuenta con suficiente información y evidencia para identificar sus principales problemas. No obstante, los comportamientos de las personas, sobre todo aquellos asociados a conductas delictivas (como la elusión y evasión), son más difíciles de identificar ante su carácter ilegal y ético. Instrumentos como el *Machine Learning* (ML) pueden complementar y contribuir a aumentar el recaudo de los impuestos, haciendo visible aquello que las personas buscan ocultar o esconder, es decir, generando predicciones sobre los ingresos de las personas a partir de características individuales, de los hogares, o incluso territoriales.
+Cada reforma tributaria ha intentado mejorar los niveles de recaudo en los últimos años, así mismo, los cambios administrativos en la DIAN también han contribuido a este propósito, buscando un sistema tributario más efciente y progresivo, ya que se cuenta con suficiente información y evidencia para identificar sus principales problemas. No obstante, los comportamientos de las personas, sobre todo aquellos asociados a conductas delictivas (como la elusión y evasión), son más difíciles de identificar ante su carácter ilegal y ético. Instrumentos como el aprendizaje de máquinas (ML en adelante, por sus siglas en inglés) pueden complementar y contribuir a aumentar el recaudo de los impuestos, haciendo visible aquello que las personas buscan ocultar o esconder, es decir, generando predicciones sobre los ingresos de las personas a partir de características individuales, de los hogares, o incluso territoriales.
 
-Así por ejemplo, en Indonesia, a través de modelos predictivos se identificaron potenciales pagos a las deudas por impuestos a partir de los registros administrativos de la autoridad fiscal de ese país [@fw]; en Armenia, se pudieron identificar posibles fraudes fiscales a partir de la información reportada por los compradores y vendedores con herramientas de ML [@bdsn]; o en Brasil, Sao Paulo, se identificaron potenciales pagadores, ingresos, el monto de los impuestos y multas a partir de los registros administrativos de autoridad fiscal del municipio [@ig]. Como revisión de literatura indicativa, más no exahustiva, para países con algunas características similares a las de Colombia, es posible identificar las potencialidades de herramientas como el ML en el recaduo de los impuestos asociados a los ingresos.
+Ha habido varios ejemplos del uso de técnicas de ML para abordar los retos del recaudo
+de los impuestos. En Indonesia, a través de modelos predictivos se identificaron potenciales pagos a las deudas por impuestos a partir de los registros administrativos de la autoridad fiscal de ese país [@fw]; en Armenia, se pudieron identificar posibles fraudes fiscales a partir de la información reportada por los compradores y vendedores con herramientas de ML [@bdsn]; o en Brasil, Sao Paulo, se identificaron potenciales pagadores, ingresos, el monto de los impuestos y multas a partir de los registros administrativos de autoridad fiscal del municipio [@ig]. 
 
 Es por tanto, que en este Problem Set busca predecir el ingreso por hora de los y las bogotanas mediante modelos que aprovechan las herramientas del ML, haciendo uso de la principal encuesta de hogares colombiana.  Más específicamente, se utilizó la *Medición de Pobreza Monetaria y Desigualdad* [@geih] del 2018 para Bogotá, un módulo de la *Gran Encuesta Integrada de Hogares* (GEIH) del DANE, la cual no sólo proporciona información sobre el mercado laboral, ingreso de las personas, características socioeconómicas y territoriales, si no a su vez representa una fuente de información confiable en la cual las personas no tienen incentivos a reportar información falsa sobre su ingreso, pues la encuesta es anónima y no tiene una finalidad tributaria.
 
@@ -84,11 +85,103 @@ Como complemento, se descargaron y unieron las bases de datos de la GEIH de 2018
 
 Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos.
 
+
+```{r descriptive_continuos, echo=FALSE, results='asis'}
+
+stats <- arrow::read_parquet("../stores/db.parquet")
+
+stats <- stats %>% mutate(woman=1-sex,
+                          woman=factor(woman, levels=c(0,1),
+                                       labels=c('Hombre','Mujer'))
+                          )
+
+stats <- data.frame(stats%>%
+                      select(c(y_ingLab_m, exp, age, esc, 
+                               woman, sector, p6430)))
+
+stats[,1] <- stats[,1]/1000
+
+stargazer(stats[c("y_ingLab_m", "exp", "age", "esc")], 
+          type = "latex", median = TRUE, digits =2, 
+          covariate.labels = c("Ingreso laboral (miles)",
+                          "Experiencia laboral",
+                          "Edad",
+                          "Años de escolaridad"),
+          title="Estadísticas descriptivas. Variables continuas",
+          header=FALSE,
+          table.placement = "H")
+
+```
+
+```{r descriptive_categorical, echo=FALSE, results='asis'}
+
+stats <- stats %>% select("woman", "sector","p6430") %>%
+  pivot_longer(cols = everything()) %>% group_by(name, value) %>% 
+  count() %>% ungroup() %>% group_by(name) %>% 
+  mutate(percent = n / sum(n) * 100) %>% 
+  rename(Variable = value, N = n, "%" = percent) %>%
+  mutate(name = factor(name , levels = c("p6430", "sector", "woman"), 
+                       labels = c("Posición ocupacional", "Sector", "Sexo")))
+
+stats <- split(stats, f = stats$name, drop = TRUE) %>% 
+  lapply(function(x) x[, -1])
+
+papaja::apa_table(
+  stats
+  , align = "llr"             
+  , caption = "Frecuencias variables categóricas"
+  , merge_method = "indent"
+  , placement = "H"
+)
+
+```
+
 De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
 
 
+# Modelo
+El modelo 
+
 
 # Perfiles de salario por edad
+
+
+Para empezar a caracterizar los determinantes de los salarios, vamos a realizar 
+una estimación que explore la relación entre ingresos y edad. Existe literatura que 
+encuentra que los salarios tienden a seguir una distribución de u invertida, en la 
+que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los salarios (Skirbekk, 2004). Entre las 
+posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
+
+Estudiar esta relación es importante en la medida en que es importante determinar los salarios por edad con el fin de realizar un perfilamiento de los ingresos por grupos de edad. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados 
+Ordinarios para analizar la relación entre salarios y edad: 
+
+$$
+log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
+$$
+Dónde $Salario_i$ corresponde a los ingresos asalariados + independientes total nominal por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar
+la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
+
+Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), decidimos hacer un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que agregamos son: horas trabajadas a la semana, el sexo de los individuos, ocupación, tipo de ocupación y su máximo nivel educativo. 
+
+
+En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión. 
+
+En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
+
+$$
+\partial{log(salario_i)}{Edad}=\beta_1  +2 \beta_2 Edad
+$$
+
+Encontramos que la interpretación depende del nivel de edad que se analiza. Para realizar el análisis, estimamos la edad promedio de la base de datos (38 años). Encontramos que, para un individuo con una edad de 38 años, un año adicional está asociado con un aumento en el salario del 1.7%. Para la interpretación del  $\beta_{0}$, sería como el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Aunque esta puede tener una intepretación poco intuitiva, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el salario promedio cuando los individuos inician su vida laboral.  
+
+En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
+
+Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de las personas. Para hacerlo, debemos encontrar el punto máximo de la función que estimamos e igualar a cero. Haciendo el procedimiento, obtenemos que esta edad máxima está dada por: $ edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta ecuación, encontramos que la edad máxima en la que se alcanza el máximo rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es esperado según la literatura (citar literatura). 
+
+Para analizar esto mejor, en la figura tal se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se puede observar que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razaones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
+
+En la fráfica anterior también se pueden observar los intervalos de confianza al nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar boortraps, en la que se relizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumeta, esto puede deberse a que existe mucha heterogeneidad de salarios en las personas con edades mayores, porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales, por ejemplo) mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que sus salarios disminuirían. 
+
 
 # Brechas de ingreso por sexo
 
@@ -117,7 +210,8 @@ stargazer(gap0,gap1,
           type='latex', dep.var.labels = "Ln Salario",
           omit = c('oficio','maxEducLevel'), 
           notes = "Controles: oficio, maxEduclevel", 
-          header = FALSE)
+          header = FALSE,
+          table.placement = "H")
 ```
 
 El coeficiente $\beta_2<0$ indica que las mujeres, en promedio y ceteris praibus, reciben un salario mensual `r exp(gap0$coefficients['womanMujer'][[1]])`  menos ingresos que los hombres. 
