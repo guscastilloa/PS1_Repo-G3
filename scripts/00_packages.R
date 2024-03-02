@@ -39,7 +39,8 @@ p_load(tidyverse , # tidy-data
        tools, 
        arrow,
        visdat,
-       boot)
+       boot,
+       papaja)
 
 # solve package conflicts
 filter = dplyr::filter
