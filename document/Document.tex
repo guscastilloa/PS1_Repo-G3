@@ -314,6 +314,65 @@ desarrollo del Problem Set. De esta manera, a continuación se presentan
 las estadísticas descriptivas de las variables utilizadas en los
 siguientes puntos.
 
+\begin{table}[H] \centering 
+  \caption{Estadísticas descriptivas. Variables continuas} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Statistic & \multicolumn{1}{c}{N} & \multicolumn{1}{c}{Mean} & \multicolumn{1}{c}{St. Dev.} & \multicolumn{1}{c}{Min} & \multicolumn{1}{c}{Median} & \multicolumn{1}{c}{Max} \\ 
+\hline \\[-1.8ex] 
+Ingreso laboral (miles) & 9,892 & 1,745.42 & 2,403.44 & 20.00 & 1,032.56 & 60,100.00 \\ 
+Experiencia laboral & 16,541 & 22.01 & 15.16 & $-$7 & 19 & 81 \\ 
+Edad & 16,542 & 39.44 & 13.48 & 18 & 38 & 94 \\ 
+Años de escolaridad & 16,541 & 11.43 & 4.34 & 0 & 11 & 26 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+\begin{table}[H]
+
+\begin{center}
+\begin{threeparttable}
+
+\caption{\label{tab:descriptive_categorical}Frecuencias variables categóricas}
+
+\begin{tabular}{llr}
+\toprule
+Variable & \multicolumn{1}{c}{N} & \multicolumn{1}{c}{\%}\\
+\midrule
+Posición ocupacional &  & \\
+\ \ \ Obrero, empleado particular & 9342 & 56.47\\
+\ \ \ Obrero, empleado del gobierno & 632 & 3.82\\
+\ \ \ Empleado doméstico & 578 & 3.49\\
+\ \ \ Trabajador por cuenta propia & 5106 & 30.87\\
+\ \ \ Patrón o empleador & 626 & 3.78\\
+\ \ \ Trabajador familiar sin remuneración & 207 & 1.25\\
+\ \ \ Trabajador sin remuneración en empresas de otros hogares & 41 & 0.25\\
+\ \ \ Jornalero o Peón & 1 & 0.01\\
+\ \ \ Otro & 9 & 0.05\\
+Sector &  & \\
+\ \ \ Agricultura, ganadería, caza, silvicultura y pesca & 106 & 0.64\\
+\ \ \ Explotación de Minas y Canteras & 50 & 0.30\\
+\ \ \ Industria manufacturera & 2470 & 14.93\\
+\ \ \ Suministro de Electricidad Gas y Agua & 77 & 0.47\\
+\ \ \ Construcción & 881 & 5.33\\
+\ \ \ Comercio, hoteles y restaurantes & 4581 & 27.69\\
+\ \ \ Transporte, almacenamiento y comunicaciones & 1484 & 8.97\\
+\ \ \ Intermediación financiera & 496 & 3.00\\
+\ \ \ Actividades inmobiliarias, empresariales y de alquiler & 2534 & 15.32\\
+\ \ \ Servicios comunales, sociales y personales & 3863 & 23.35\\
+Sexo &  & \\
+\ \ \ Hombre & 8767 & 53.00\\
+\ \ \ Mujer & 7775 & 47.00\\
+\bottomrule
+\end{tabular}
+
+\end{threeparttable}
+\end{center}
+
+\end{table}
+
 De las 32177 observaciones, se puede observar la tasa de valores
 perdidos de las variables de interés:
 
@@ -338,9 +397,11 @@ experiencia y habilidades especializadas, por lo que sus salarios son
 más bajos al inicio de sus carreras. A partir de algún momento de la
 edad adulta, las capacidades cognitivas y físicas empiezan a disminuir.
 
-Por tal motivo, se plantea estimar la siguiente regresión por medio de
-Mínimos Cuadrados Ordinarios para analizar la relación entre salarios y
-edad:
+Estudiar esta relación es importante en la medida en que es importante
+determinar los salarios por edad con el fin de realizar un perfilamiento
+de los ingresos por grupos de edad. Por tal motivo, se plantea estimar
+la siguiente regresión por medio de Mínimos Cuadrados Ordinarios para
+analizar la relación entre salarios y edad:
 
 \[
 log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
@@ -359,35 +420,83 @@ endogeneidad (en la medida en la que la edad está correlacionada con
 otras variables como la educación y la experiencia), decidimos hacer un
 ejercicio adicional, en el que se incluyen controles con el fin de
 mejorar la inferencia causal. Las variables explicativas que agregamos
-son:
+son: horas trabajadas a la semana, el sexo de los individuos, ocupación,
+tipo de ocupación y su máximo nivel educativo.
 
-En la tabla \# se puede observar el resultado de esta estimación. El
-coeficiente de la variable edad indica que, en promedio, un aumento de
-un año en la edad está asociado con un increento en el salario del
-6.4\%. En cuanto al coeficiente de la variable edad al cuadrado, se
-interpretaría como un aumento de la edad al cuadrado está asociado con
-una disminución del salario en 0.1\%. El signo de este estimador indica
-que existe una relación de u invertida entre la educación y el salario.
-Este es el signo esperado según la literatura. Sin embargo, si derivamos
-la función con respecto a la edad, encontramos que para interpretar el
-coeficiente de la edad depende de la edad que se analiza.
+En la tabla tal se pueden observar los resultados de las estimaciones.
+La columna 1 muestra los resultados de la estimación sin controles,
+mientras que la columna 2 presenta la regresión con controles. Se puede
+observar que, en promedio, un aumento de un año en la edad está asociado
+con un incremento en el salario del 5.5\% (modelo sin controles) y del
+6.4\% (modelo con controles). Estos resultados muestran que nuestra
+especificación es robusta en la medida en que los resultados no
+presentan un gran cambio en magnitud. Sin embargo, debido a que estamos
+estimando una relación no lineal entre la edad y el salario, la
+interpretación no es tan intuitivamente porque debemos tener en cuenta
+el \(\beta_2\) de la regresión.
+
+En cuanto al coeficiente de la variable edad al cuadrado no cambia para
+ninguno de los modelos. Lo más importante de este coeficiente es su
+signo negativo. Esto indica que hay una relación cóncava entre el
+salario y la edad, resultado esperado por la teoría. Para poder
+interpretar correctamente el coeficiente de la edad, debemos derivar con
+respecto a la edad:
 
 \[
-\partial{log(salario_i)}{Edad}=\beta_1 Edad +2 \beta_2 Edad
+\partial{log(salario_i)}{Edad}=\beta_1  +2 \beta_2 Edad
 \]
 
-Para realizar un análisis con base al promedio, encontramos el promedio
-de edad de la base de datos y realizamos el análisis de esta función.
+Encontramos que la interpretación depende del nivel de edad que se
+analiza. Para realizar el análisis, estimamos la edad promedio de la
+base de datos (38 años). Encontramos que, para un individuo con una edad
+de 38 años, un año adicional está asociado con un aumento en el salario
+del 1.7\%. Para la interpretación del \(\beta_{0}\), sería como el
+logaritmo del salario promedio cuando las personas tienen 0 años de
+edad. Aunque esta puede tener una intepretación poco intuitiva, debido a
+que nuestra muestra está acotada a personas de 18 años, se interpretaría
+como el salario promedio cuando los individuos inician su vida laboral.
 
 En cuanto a la interpretación del coeficiente de determinación(r2) nos
-indica que aproximadamente el 34\% de la variación del logaritmo del
-salario es explicada por la edad. Esta medida es esperada debido a que
-existen múltiples factores que están expresados en la u y que pueden
-explicar también los salarios.
+indica que, aproximadamente, el 2.3\% de la variación del logaritmo del
+salario es explicada por la edad. Aunque este r2 puede ser bajo, es
+explicado porque existen muchos más factores que explican el salario.
+Por esto, cuando vemos el r2 del modelo con controles, encontramos que
+ell r2 se incrementa hasta aproximadamente el 34\%. Sin embargo, estas
+variables son significativas a un nivel de significancia del 5\%, lo que
+indica que la edad es un determinante del salario.
 
-Resultados de la significancia conjunta
+Ahora, vamos a encontrar la edad en la que empiezan a disminuir los
+ingresos de las personas. Para hacerlo, debemos encontrar el punto
+máximo de la función que estimamos e igualar a cero. Haciendo el
+procedimiento, obtenemos que esta edad máxima está dada por: \$
+edad\_\{max\}=-\beta\_1/2\beta\_2\$. Reemplazando estos valores en esta
+ecuación, encontramos que la edad máxima en la que se alcanza el máximo
+rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es
+esperado según la literatura (citar literatura).
 
-Resultados del ``peak'' del salario con bootstrap.
+Para analizar esto mejor, en la figura tal se puede observar la relación
+entre la edad y los salarios. En la primera mitad de la gráfica, se
+puede observar que aumentan los salarios a medida que aumenta la edad.
+Esto es explicado debido a que las personas cuentan con cada vez más
+experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65
+años, en los que los incrementos comienzan a disminuir hasta niveles más
+bajos que los incrementos al comienzo de su vida laboral. Como se
+discutió al principio de la sección, puede deberse a múltiples razaones
+como un retraso en el aprendizaje de nuevas habilidades por la reducción
+de capacidad cognitiva, lo que implica tener más dificultad para
+ascender o encontrar empleos con mayores ingresos.
+
+En la fráfica anterior también se pueden observar los intervalos de
+confianza al nivel de confianza del 95\%. Estos intervalos fueron
+construidos con errores estándar boortraps, en la que se relizaron 1000
+repeticiones de la regresión sin controles con un resampleo de la
+muestra para cada repetición. Es importante notar que estos intervalos
+crecen a medida que la edad aumeta, esto puede deberse a que existe
+mucha heterogeneidad de salarios en las personas con edades mayores,
+porque, por ejemplo, existen personas con salarios muy altos (con
+posiciones gerenciales, por ejemplo) mientras que otras personas
+continuaron con puestos relativamente bajos o que están cerca de la edad
+de jubilación, por lo que sus salarios disminuirían.
 
 \hypertarget{brechas-de-ingreso-por-sexo}{%
 \section{Brechas de ingreso por
@@ -405,7 +514,7 @@ modelo univariado:
   \label{gap0}
 \end{equation}
 
-\begin{table}[!htbp] \centering 
+\begin{table}[H] \centering 
   \caption{Estimando brecha de género} 
   \label{} 
 \begin{tabular}{@{\extracolsep{5pt}}lcc} 
