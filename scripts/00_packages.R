@@ -38,7 +38,8 @@ p_load(tidyverse , # tidy-data
        arsenal, # To compare dataframes
        tools, 
        arrow,
-       visdat)
+       visdat,
+       boot)
 
 # solve package conflicts
 filter = dplyr::filter
