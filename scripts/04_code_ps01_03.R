@@ -10,8 +10,6 @@ rm (list=ls())
 source("scripts/00_packages.R")
 gc()
 
-p_load("boot")
-
 #Cargar la base de datos 
 datos_geih<-read_parquet("stores/db.parquet")
 View(datos_geih)
@@ -108,56 +106,64 @@ regression_table <- gsub("Adjusted R", "R ajustado", regression_table)
 # Escribir el contenido modificado de nuevo al archivo
 writeLines(regression_table, "views/fit.tex")
 
+#Obtener la edad máxima en la que el incremento en el salario empieza a disminuir 
+matrix_coef <- summary(reg_age)$coefficients
+matrix_coef
+coeficiente_edad<-my_estimates <- matrix_coef[2, 1] 
+coeficiente_edad2<-my_estimates <- matrix_coef[3, 1] 
+coeficiente_edad2
+
+#Aplico la fórmula para obtener el "peak" de la edad 
+edad_peak<-(-coeficiente_edad/(2*coeficiente_edad2))
+edad_peak
+#Encontramos que el peak del salario está en los 49.65 años. 
 
 #BOOTSTRAP para construir los intervalos de confianza---------------------------
 #Definir la función que espero extraer los coeficientes del modelo basado en 
 #muestras de bootstrap
+
+# Calcular intervalos de confianza bootstrap
+datos_completos <- na.omit(geih_select[c("age","ln_wage")])
+
 set.seed(1453)
-get_coefficients <- function(geih_selected, indices) {
+coeficientes <- function(datos_completos, indices) {
   fit <- lm(ln_wage ~ age + agesqr, data = geih_selected[indices, ])
   return(coef(fit))
 }
 
 #Usar la función boot para calcular los coeficientes de confianza 
-boot_results <- boot(data = geih_select, statistic = get_coefficients, R = 1000)
-confidence_intervals <- boot.ci(boot_results, type = "perc")
+boot_resultados <- boot(data = datos_completos, statistic = coeficientes, R = 1000)
+coef_boot <- boot_resultados$t0
+SE <- apply(boot_resultados$t,2,sd)
 
-#Obtener los intervalos de confianza 
-confidence_intervals_95 <- confidence_intervals$percent[, 4]
+# Crear una secuencia de edades para predecir los ingresos
+edades_pred <- seq(min(datos_completos$age,na.rm=TRUE), max(datos_completos$age,na.rm=TRUE),length=50)
+edades_pred
 
-#Realizar las estimaciones y exportar. 
-geih_select<- geih_select  %>% mutate(yhat=predict(reg_age))
+#Ahora hacerlo para los intervalos de confianza 
+y <- coef_boot[1] + coef_boot[2] * edades_pred + coef_boot[3] * edades_pred^2
+y_i <- (coef_boot[1]-1.96*SE[1]) + (coef_boot[2]-1.96*SE[2])*edades_pred + 
+  (coef_boot[3]-1.96*SE[3])*edades_pred^2
+y_s <- (coef_boot[1]+1.96*SE[1]) + (coef_boot[2]+1.96*SE[2])*edades_pred + 
+  (coef_boot[3]+1.96*SE[3])*edades_pred^2
 
-geih_select<-geih_select %>% mutate(mean_y = mean(ln_wage),
- yhat_reg = mean(yhat))
+df <- data.frame(edades_pred, y, y_i, y_s)
+
+age_earnings_plot<- ggplot(df, aes(x = edades_pred, y = y)) +
+  geom_line(aes(color = "Salario estimado"), size = 1) +
+  geom_line(aes(x = edades_pred, y = y_i, color = "Límite inferior"), linetype = "dotted", linewidth = 1) +
+  geom_line(aes(x = edades_pred, y = y_s, color = "Límite superior"), linetype = "dotted", linewidth = 1) +
+  geom_ribbon(aes(ymin = y_i, ymax = y_s), fill = "gray80", alpha = 0.5) +
+  scale_color_manual(name = "", values = c("Estimado" = "purple", "Límite inferior" = "blue", "Límite superior" = "blue")) +
+  labs(x = "Edad", y = "Log(Salario)") +
+  theme_classic() +
+  scale_x_continuous(limits = c(18, 90)) +
+  geom_vline(xintercept = 49.65, linetype = "dotted") +
+  theme(legend.position = "bottom")
 
 
-summ = geih_select %>%  
-  group_by(
-    age, agesqr
-  ) %>%  
-  summarize(
-    mean_y = mean(ln_wage),
-    yhat_reg = mean(yhat), .groups="drop"
-  ) 
-
-
-age_earnings_plot <- ggplot(summ) + 
-  geom_line(
-    aes(x = age, y = yhat_reg), 
-    color = "green", size = 1.5
-  ) + 
-  labs(
-    title = "log Wages by Age in the GEIH 2018",
-    x = "Age",
-    y = "log Wages"
-  ) +
-  theme_bw() 
-
-age_earnings_plot <- age_earnings_plot +
-  geom_vline(xintercept = c(34.58, 49.45), linetype = "dashed", color = "red")
 
 # Export ggplot as PNG
-ggsave("stores/age_earnings_plot.png", plot = age_earnings_plot, width = 6, 
+ggsave("views/age_earnings_plot.png", plot = age_earnings_plot, width = 6, 
        height = 4, dpi = 300)
 
