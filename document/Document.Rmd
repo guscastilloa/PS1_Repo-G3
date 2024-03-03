@@ -163,12 +163,20 @@ la relación en u invertida entre salarios y la edad y el término $u_i$ corresp
 Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), decidimos hacer un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que agregamos son: horas trabajadas a la semana, el sexo de los individuos, ocupación, tipo de ocupación y su máximo nivel educativo. 
 
 
-En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión. 
+En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión.
 
+```{r}
+# Leer el contenido del archivo LaTeX
+ruta_tabla <- "../views/fit.tex"
+contenido_tabla <- readLines(ruta_tabla)
+
+# Mostrar la tabla en formato LaTeX
+cat(contenido_tabla, sep = "\n")
+```
 En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
 
 $$
-\partial{log(salario_i)}{Edad}=\beta_1  +2 \beta_2 Edad
+\frac{\partial log(salario)}{\partial Edad} =\beta_1  +2 \beta_2 Edad
 $$
 
 Encontramos que la interpretación depende del nivel de edad que se analiza. Para realizar el análisis, estimamos la edad promedio de la base de datos (38 años). Encontramos que, para un individuo con una edad de 38 años, un año adicional está asociado con un aumento en el salario del 1.7%. Para la interpretación del  $\beta_{0}$, sería como el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Aunque esta puede tener una intepretación poco intuitiva, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el salario promedio cuando los individuos inician su vida laboral.  
@@ -180,6 +188,11 @@ Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de 
 Para analizar esto mejor, en la figura tal se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se puede observar que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razaones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
 
 En la fráfica anterior también se pueden observar los intervalos de confianza al nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar boortraps, en la que se relizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumeta, esto puede deberse a que existe mucha heterogeneidad de salarios en las personas con edades mayores, porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales, por ejemplo) mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que sus salarios disminuirían. 
+
+```{r echo=FALSE, message=FALSE}
+
+knitr::include_graphics('../views/age_earnings_plot.png')
+```
 
 
 # Brechas de ingreso por sexo
@@ -235,6 +248,7 @@ Por otra parte, estimando el modelo con FWL y boostrap se puede apreciar que el 
 
 c) 
 ```{r echo=FALSE, message=FALSE,file="../views/earnings_peak_ages.PNG",fig.align = 'center', fig.cap="Perfil de ingresos vs edad por sexo", dpi=300}
+knitr::include_graphics('../views/earnings_peak_ages.png')
 ```
 \begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
