@@ -142,15 +142,14 @@ geih_select <- geih_select[complete.cases(geih_select[, c("sex", "posicion", "of
 
 ## i) Usamos FWL
 
-geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex)~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
-geih_select<- geih_select %>% mutate(log_wage_res=lm(ln_wage~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
+geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex) ~ posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
+geih_select<- geih_select %>% mutate(log_wage_res=lm(ln_wage ~ posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
 
 # Corremos una regresión con las anteriores dos regresiones
 
 reg3<- lm(log_wage_res~woman_res, geih_select)
 stargazer(reg3,type="text",digits=3 ) 
 stargazer(reg3, reg1 , digits=3, align=TRUE, type="latex", out="views/4reg3.tex" , omit.stat = c("adj.rsq", "f", "ser"))
-
 
 ## ii) FWL con boostrap
 
@@ -239,6 +238,7 @@ text(47.96018, 5, "47,9", pos = 3)  # Etiqueta para línea azul
 dev.off()
 
 
+install.packages("dcolumn")
 
 
 colnames(geih_select)
