@@ -27,6 +27,7 @@ header-includes:
   - \usepackage{longtable}
   - \usepackage{array}
   - \usepackage{multirow}
+  - \usepackage{dcolumn}
 
 subtitle: Big Data y Machine Learning para Economía Aplicada
 bibliography: References.bib
@@ -172,22 +173,7 @@ Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad 
 En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión.
 
 
-
 \input{"../views/fit.tex"}
-
-
-```{r table, echo=FALSE, message=FALSE, results="asis"}
-# Leer el contenido del archivo LaTeX
-#ruta_tabla <- "../views/fit.tex"
-#contenido_tabla <- readLines(ruta_tabla)
-
-# Mostrar la tabla en formato LaTeX
-#cat(contenido_tabla, sep = "\n")
-
-```
-
-
-
 
 En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
 
@@ -223,8 +209,7 @@ a) En esta sesión se intenta predecir la brecha salarial del logaritmo del ingr
 
 Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.Esto con un nivel de significacion del 5% y con un error estándar de 0.733.
 
-<<<<<<< Updated upstream
-=======
+
 ```{r code_gap, echo=FALSE}
 gap0 <- lm('log(y_ingLab_m)~woman', data = db)
 gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
@@ -232,7 +217,7 @@ gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
 mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
 ```
 
->>>>>>> Stashed changes
+
 ```{r code_gap_sex, echo=FALSE}
 #source(here::here("scripts", "00_packages.R"))
 #source(here::here("scripts", "04_Brecha_Genero_2.R"))
