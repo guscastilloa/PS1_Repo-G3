@@ -109,6 +109,8 @@ geih_select<-geih_select %>%
 geih_select<- geih_select  %>% mutate(age2=edad^2)
 geih_select <- geih_select  %>% mutate(ln_wage = log(y_total_m_ha))
 
+
+
 ####################################################################################
 
 
@@ -162,9 +164,75 @@ btrap(geih_select,1:nrow(geih_select))
 
 boot(geih_select, btrap, R = 2000) 
 
+# C) Gráficamos la predición salario-edad, y estimación de las edades donde se logra el mayor slario con los respectivos intervalaos de confianza por género. 
+## - estimacion de los coeficientes 
 
+mod0 <- lm(ln_wage ~ edad + I(edad^2), data = geih_select, subset = (sex == 0))
+mod1 <- lm(ln_wage ~ edad + I(edad^2), data = geih_select, subset = (sex == 1))
 
- 
+## Realizamos el gráfico usando los coeficientes estimados. Con esto generamos un gráfico de ingresos en funcion de la edad. 
+
+age <- seq(min(geih_select$edad), max(geih_select$edad), by = 1)  # edades
+
+predic0 <- predict(mod0, newdata = data.frame(edad=age))  # Predicciones
+predic1 <- predict(mod1, newdata = data.frame(edad=age))  # Predicciones
+
+geih_select_0 <- geih_select[geih_select$sex == 0,]
+geih_select_1 <- geih_select[geih_select$sex == 1,]
+
+peak_ages<-function(data,index){
+  coefficients <- coef(lm(ln_wage ~ edad + I(edad^2), data = data, subset = index))
+  coef2 <- coefficients[2]
+  coef3 <- coefficients[3]
+  coef_peak <- -(coef2/(2*coef3))
+  return(coef_peak)
+}
+
+#Para los hombres
+peak_ages(geih_select_0,1:nrow(geih_select_0))
+val0 <- boot(geih_select_0, peak_ages, R = 2000) 
+val0
+quantile(val0$t[,1], 0.025)
+quantile(val0$t[,1], 0.975)
+
+#Para las mujeres
+peak_ages(geih_select_1,1:nrow(geih_select_1))
+val1 <- boot(geih_select_1, peak_ages, R = 2000) 
+val1
+quantile(val1$t[,1], 0.025)
+quantile(val1$t[,1], 0.975)
+
+# Definimos la ruta para gurdar nuestro gráfico
+graph_peak <- file.path("views", "earnings_peak_ages.png")
+# gráfico
+png(filename = graph_peak, width = 800, height = 600 )
+
+# Plot del perfil de ingresos
+plot(geih_select$edad, (geih_select$ln_wage), 
+     xlab = "Edad", ylab = "log(Ingresos)", 
+     col = alpha("grey", 0.8), main = "Ingresos vs. Edad por sexo", 
+     xlim = c(min(geih_select$edad), max(geih_select$edad)), 
+     ylim = c(min(geih_select$ln_wage) - 0.5, max(geih_select$ln_wage) + 0.5))
+lines(age, predic0, col = "red", lwd = 1)  # Línea de predicciones
+lines(age, predic1, col = "blue", lwd = 1)  # Línea de predicciones
+# Colocamos líneas verticales
+abline(v = 42.44354, col = "red", lwd = 2, lty = 1)  # Línea discontinua para el valor central 
+abline(v = quantile(val0$t[,1], 0.025), col = "red", lwd = 2, lty = 3) 
+abline(v = quantile(val0$t[,1], 0.975), col = "red", lwd = 2, lty = 3) 
+abline(v = 38.14467, col = "blue", lwd = 2, lty = 1)  
+abline(v = quantile(val1$t[,1], 0.025), col = "blue", lwd = 2, lty = 3) 
+abline(v = quantile(val1$t[,1], 0.975), col = "blue", lwd = 2, lty = 3) 
+# Colocamos leyenda
+legend("topright",                    # posición de la leyenda
+       legend = c("Hombre", "Mujer"), # etiquetas
+       col = c("red", "blue"),        # colores de las líneas en la leyenda
+       lwd = 1,                       # grosor de las líneas en la leyenda
+       bg = "white")                  # color de fondo de la leyenda
+# Agregar pie de página
+#mtext("Lineas verticales continuas: Peak ages para cada sexo. Lineas verticales punteadas: Intervalos de confianza.", side = 1, line = 3.8, adj = 0, cex = 0.6)
+
+# cerrar el dispositivo gráfico PNG
+dev.off()
 
 
 
