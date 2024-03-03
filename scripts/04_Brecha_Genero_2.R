@@ -1,7 +1,7 @@
 ################################################################################
 # Problem Set 1 - Question 4
 # Authors: Jorge Luis Congacha Yunda
-# Descripción: Brecha salarial
+# Descripción: Brecha salarial por género
 ################################################################################
 
 # Prepare workspace
@@ -11,12 +11,10 @@ gc()
 
 #Cargar la base de datos 
 datos_geih<-read_parquet("stores/geih.parquet")
-View(datos_geih)
 
 ################################################################################
 # 1. limpieza de base de datos.
 # 1.1 Selección de observaciones 
-
 #################################################################################
 #Definir los posibles predictores de la base de datos: 
 
@@ -35,20 +33,17 @@ geih_select <- geih_select %>%
          edad=age,
          posicion= p6050) 
 
-
-# Por ahora eliminé filas con valores faltantes o no finitos en ln_wage
-geih_select <- geih_select[complete.cases(geih_select$ln_wage) & 
-                             is.finite(geih_select$ln_wage), ]
-
-#vamos a codificar nuestra variable sexo. Vamos a dejar a las mujeres con 1.
-geih_select$sex <- ifelse(geih_select$sex == 1, 0, 1)
-table(geih_select$sex)
+#Generar nuevas variables (edad al cuadrado) y el los salarios en logaritmo. 
+geih_select<- geih_select  %>% mutate(age2=edad^2)
+geih_select <- geih_select  %>% mutate(ln_wage = log(1+y_ingLab_m_ha))
 
 # A) Estimación de la brecha salarial incondicional. Log(w)= β1 + β2Female + u
 reg1 <- lm(ln_wage ~ sex, data = geih_select)
 summary(reg1)
 
-stargazer(reg1, digits=3, align=TRUE, type="latex", out="views/4reg1.tex" , omit.stat = c("adj.rsq", "f", "ser"))
+#Exportar tabla
+stargazer(reg1, digits=3, align=TRUE, type="latex", out="views/4reg1.tex" , 
+          omit.stat = c("adj.rsq", "f", "ser"))
 
 #B) Estimación de brecha salarial condicional incorporando variables de control
 #como características similares de trabajadores y puestos de trabajo.
@@ -60,22 +55,21 @@ summary(reg2)
 
 # Estimamos la brecha salarial usando:
 
-# Eliminación de una fila con valores faltantes en todas las variables utilizadas en el modelo
-geih_select <- geih_select[complete.cases(geih_select[, 
-                                                      c("sex", "posicion", "oficio", 
-                                                        "ocupacion", "formal", 
-                                                        "microEmpresa", "maxEducLevel",
-                                                        "edad")]), ]
+# Eliminación de una fila con valores faltantes en todas las variables
+#utilizadas en el modelo
+geih_select <- na.omit(geih_select[, c("ln_wage","sex", "posicion", "oficio", "ocupacion", "formal", "microEmpresa", "maxEducLevel", "edad")])
 
 ## i) Usamos FWL
 
-geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex) ~ posicion+oficio+
-                                                    ocupacion+formal+microEmpresa+
-                                                    maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
+geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex) ~ posicion+oficio+ocupacion+
+                                                    formal+microEmpresa+
+                                                    maxEducLevel+edad,
+                                                  geih_select)$residuals) #obtenemos los residuales de sex~x
 
 geih_select<- geih_select %>% mutate(log_wage_res=lm(ln_wage ~ posicion+oficio+
                                                        ocupacion+formal+microEmpresa+
                                                        maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
+
 
 # Corremos una regresión con las anteriores dos regresiones
 
