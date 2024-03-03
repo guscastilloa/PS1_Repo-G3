@@ -1,31 +1,30 @@
 ---
 title: 'Problem Set 1: Predicting Income'
-subtitle: 'Big Data y Machine Learning para Economía Aplicada'
-author:  
-        - Gustavo Adolfo Castillo Álvarez (201812166), 
-        - Alexander Almeida Ramírez (202225165), 
-        - Jorge Luis Congacha Yunda (201920042) y 
-        - Jaime Orlando Buitrago González (200612390)
+author:
+- Gustavo Adolfo Castillo Álvarez (201812166),
+- Alexander Almeida Ramírez (202225165),
+- Jorge Luis Congacha Yunda (201920042) y
+- Jaime Orlando Buitrago González (200612390)
 date: "03 de marzo de 2024"
-fontsize: 11pt
-geometry: margin=1in
-documentclass: article
-papersize: letter
-lang: es
-
-header-includes:
-    - \usepackage[utf8]{inputenc}
-    - \usepackage{floatrow}
-    - \floatsetup[figure]{capposition=top}
-    
-output: 
+output:
+  html_document:
+    df_print: paged
   pdf_document:
     number_sections: true
     fig_width: 3
     fig_height: 2
     fig_caption: true
-
-bibliography: References.bib  
+fontsize: 11pt
+geometry: margin=1in
+documentclass: article
+papersize: letter
+lang: es
+header-includes:
+- \usepackage[utf8]{inputenc}
+- \usepackage{floatrow}
+- \floatsetup[figure]{capposition=top}
+subtitle: Big Data y Machine Learning para Economía Aplicada
+bibliography: References.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -176,7 +175,7 @@ Encontramos que la interpretación depende del nivel de edad que se analiza. Par
 
 En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
 
-Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de las personas. Para hacerlo, debemos encontrar el punto máximo de la función que estimamos e igualar a cero. Haciendo el procedimiento, obtenemos que esta edad máxima está dada por: $ edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta ecuación, encontramos que la edad máxima en la que se alcanza el máximo rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es esperado según la literatura (citar literatura). 
+Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de las personas. Para hacerlo, debemos encontrar el punto máximo de la función que estimamos e igualar a cero. Haciendo el procedimiento, obtenemos que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta ecuación, encontramos que la edad máxima en la que se alcanza el máximo rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es esperado según la literatura (citar literatura). 
 
 Para analizar esto mejor, en la figura tal se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se puede observar que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razaones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
 
@@ -185,9 +184,7 @@ En la fráfica anterior también se pueden observar los intervalos de confianza 
 
 # Brechas de ingreso por sexo
 
-# Predicción de salarios
-
-La meta es predecir la brecha salarial del logaritmo del ingreso. Comenzamos estimando el modelo más sencillo de todos, es decir, el modelo univariado:
+En esta sesión se intenta predecir la brecha salarial del logaritmo del ingreso entre hombres y mujeres. Para ello, comenzamos estimando el modelo más sencillo de todos, es decir, el modelo univariado:
 
 
 \begin{equation}
@@ -195,7 +192,7 @@ La meta es predecir la brecha salarial del logaritmo del ingreso. Comenzamos est
   \label{gap0}
 \end{equation}
 
-
+Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.ESto con un nivel de significacion del 1%.
 
 ```{r code_gap, echo=FALSE}
 gap0 <- lm('log(y_ingLab_m)~woman', data = db)
@@ -222,7 +219,7 @@ En la primera etapa, *partialling-out*, ejecutamos dos regresiones. Suponiendo q
 
 Finalmente ejecutamos la segunda regresión univariada `log_wage_res~woman_res` y en principio deberíamos obtener el mismo coeficiente de haber ejecutado el modelo completo.
 
-
+# Predicción de salarios
 
 # Referencias bibliográficas
 
