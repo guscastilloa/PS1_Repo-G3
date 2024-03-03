@@ -184,7 +184,7 @@ En la fráfica anterior también se pueden observar los intervalos de confianza 
 
 # Brechas de ingreso por sexo
 
-En esta sesión se intenta predecir la brecha salarial del logaritmo del ingreso entre hombres y mujeres. Para ello, comenzamos estimando el modelo más sencillo de todos, es decir, el modelo univariado:
+a) En esta sesión se intenta predecir la brecha salarial del logaritmo del ingreso entre hombres y mujeres. Para ello, comenzamos estimando el modelo más sencillo de todos, es decir, el modelo univariado:
 
 
 \begin{equation}
@@ -192,13 +192,20 @@ En esta sesión se intenta predecir la brecha salarial del logaritmo del ingreso
   \label{gap0}
 \end{equation}
 
-Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.ESto con un nivel de significacion del 1%.
+Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.Esto con un nivel de significacion del 5% y con un error estándar de 0.733.
 
 ```{r code_gap, echo=FALSE}
 gap0 <- lm('log(y_ingLab_m)~woman', data = db)
 gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
 # gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
 mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
+```
+```{r code_gap_sex, echo=FALSE}
+source(here::here("scripts", "00_packages.R"))
+source(here::here("scripts", "04_Brecha_Genero_2.R"))
+reg1 <- lm(ln_wage ~ sex, data = geih_select)
+reg2 <- lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
+mean_wage_female <- exp(reg1$coefficients[[1]]+reg1$coefficients[[2]])
 ```
 
 ```{r out_gap0, echo=FALSE, results='asis'}
@@ -211,13 +218,27 @@ stargazer(gap0,gap1,
           table.placement = "H")
 ```
 
-El coeficiente $\beta_2<0$ indica que las mujeres, en promedio y ceteris praibus, reciben un salario mensual `r exp(gap0$coefficients['womanMujer'][[1]])`  menos ingresos que los hombres. 
+El coeficiente $\beta_2<0$ indica que las mujeres, en promedio y ceteris praibus, reciben un salario mensual `r exp(reg1$coefficients['womanMujer'][[1]])`  menos ingresos que los hombres. 
 
-## Estimación con FWL
+B) Para mejorar la estimación anterior se corrió un modelo condicional en donde se incluye controles como características similiares de trabajadores y puestos de trabajo. Para ello se recurrio al uso de FWL y FWL con boostrap.   
 
-En la primera etapa, *partialling-out*, ejecutamos dos regresiones. Suponiendo que la variable de interés es la dicotómica de $Mujer$, entonces en la primera regresión buscamos estimar `woman~x1+x2+...`, donde las `xi` son todas aquellas demás variables de control para corregir el potencial  sesgo de variable omitida. Luego nos quedamos con los residuales `woman_res`, y ejecutamos una segunda regresión en la que estimemos `log_wage~x1+x2...`, y guardamos estos residuales, `log_wage_res`. 
+## Estimación FWL:
 
-Finalmente ejecutamos la segunda regresión univariada `log_wage_res~woman_res` y en principio deberíamos obtener el mismo coeficiente de haber ejecutado el modelo completo.
+En la primera etapa, *partialling-out*, ejecutamos dos regresiones. Definimos nuestra variable de interés a la variable dicotómica de $Mujer$. Con esto corremos la primera regresión para estimar `woman~x1+x2+...`, donde las `xi` son todas aquellas variables de control usadas para corregir el potencial  sesgo de variable omitida. Posteriormente nos quedamos con los residuales `woman_res`, y ejecutamos una segunda regresión en la que estimemos `log_wage~x1+x2...`, y guardamos estos residuales, `log_wage_res`. 
+
+Finalmente ejecutamos la segunda regresión univariada `log_wage_res~woman_res` y obtenemos el mismo coeficiente del modelo original con controles.Los resultados dejan ver que una vez incorporado controles a la regresión de gap, se tiene que el salario de las mujeres es en promedio menor en 16.5% respecto al salario del hombre, ceteris paribus.
+
+## Estimación FWL con boostrap:
+
+Por otra parte, estimando el modelo con FWL y boostrap se puede apreciar que el valor del gap es el mismo del modelo anterior, es decir, el gap es del 16.54%. Con este obtenemos el mismo valor de gap, sin embargo el valor del error estandar para la estimación con FWL y Boostra es es menor, siendo est de 0.0122. Esta diferencia se da debido aque FWL asume que su modelo es homcedastico, lo cual no es verdadero. 
+
+
+c) 
+```{r echo=FALSE, message=FALSE,file="../views/earnings_peak_ages.PNG",fig.align = 'center', fig.cap="Perfil de ingresos vs edad por sexo", dpi=300}
+```
+\begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
+
+El calculo de los picos de los salarios para cada sexo se realizó a partir de dos regresiones
 
 # Predicción de salarios
 
