@@ -238,7 +238,11 @@ c)
 ```
 \begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
-El calculo de los picos de los salarios para cada sexo se realizó a partir de dos regresiones
+Para identificar las edades en las que tanto hombres como mujeres alcanzan sus mayores ingresos laborales, realizamos dos análisis por separado: uno para hombres y otro para mujeres. Primero, ajustamos modelos de regresión a los datos de cada grupo y luego realizamos las predicciones correspondientes. Se uso la técnica de bootstrap para calcular los valores de los picos de ingresos, representados por la fórmula \[\frac{{-B_1}}{{2 \cdot B_2}}\], junto con sus intervalos de confianza. Los resultados de ambas regresiones son estadísticamente significativos, lo que indica que la edad explica parte de la variabilidad en el logaritmo de los salarios, todavía queda una parte considerable de la variabilidad que no se explica.
+
+Al observar la gráfica, observamos que la edad pico para los hombres es de 47.96018, mientras que para las mujeres es de 42.64015. Esta diferencia señala una disparidad significativa en las edades donde ambos géneros alcanzan sus máximos ingresos laborales. Además, los intervalos de confianza de ambas edades no se superponen, lo que sugiere una distinción clara entre ambos grupos.
+
+Sin embargo, dado que la gráfica solo considera la edad y el coeficiente de determinación \(R^2\) es bajo, es probable que la inclusión de más variables predictivas mejore considerablemente la capacidad de predicción. 
 
 # Predicción de salarios
 

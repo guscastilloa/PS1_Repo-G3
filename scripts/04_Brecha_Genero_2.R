@@ -212,18 +212,18 @@ plot(geih_select$edad, (geih_select$ln_wage),
      col = alpha("grey", 0.8), main = "Ingresos vs. Edad por sexo", 
      xlim = c(10, 80), ylim = c(5, 13),  # Establecer rango y frecuencia en ejes X e Y
      xaxp = c(10, 80, 7), yaxp = c(5, 13, 8))  # Establecer frecuencia en ejes X e Y
-lines(age, predic0, col = "red", lwd = 1)  # Línea de predicciones para Hombres
 lines(age, predic1, col = "blue", lwd = 1)  # Línea de predicciones para Mujeres
+lines(age, predic0, col = "red", lwd = 1)  # Línea de predicciones para Hombres
 # Colocamos líneas verticales
-abline(v = 42.64015, col = "red", lwd = 2, lty = 1)  # Línea discontinua para el valor central Hombres
-abline(v = quantile(val0$t[,1], 0.025), col = "red", lwd = 2, lty = 3) 
-abline(v = quantile(val0$t[,1], 0.975), col = "red", lwd = 2, lty = 3) 
-abline(v = 47.96018, col = "blue", lwd = 2, lty = 1)  # Línea discontinua para el valor central Mujeres
+abline(v = 42.64015, col = "blue", lwd = 2, lty = 1)  # Línea discontinua para el valor central Hombres
 abline(v = quantile(val1$t[,1], 0.025), col = "blue", lwd = 2, lty = 3) 
 abline(v = quantile(val1$t[,1], 0.975), col = "blue", lwd = 2, lty = 3) 
+abline(v = 47.96018, col = "red", lwd = 2, lty = 1)  # Línea discontinua para el valor central Mujeres
+abline(v = quantile(val0$t[,1], 0.025), col = "red", lwd = 2, lty = 3) 
+abline(v = quantile(val0$t[,1], 0.975), col = "red", lwd = 2, lty = 3) 
 # Colocamos leyenda
 legend("topright",                    # posición de la leyenda
-       legend = c("Hombre", "Mujer"), # etiquetas
+       legend = c("Mujer", "Hombre"), # etiquetas
        col = c("blue", "red"),        # colores de las líneas en la leyenda
        lwd = 1,                       # grosor de las líneas en la leyenda
        bg = "white")                  # color de fondo de la leyenda
@@ -236,12 +236,3 @@ text(47.96018, 5, "47,9", pos = 3)  # Etiqueta para línea azul
 
 # cerrar el dispositivo gráfico PNG
 dev.off()
-
-
-install.packages("dcolumn")
-
-
-colnames(geih_select)
-summarytools::freq(geih_select$oficio, cumul=FALSE)
-
-
