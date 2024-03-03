@@ -207,12 +207,6 @@ a) En esta sesión se intenta predecir la brecha salarial del logaritmo del ingr
 
 Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.Esto con un nivel de significacion del 5% y con un error estándar de 0.733.
 
-```{r code_gap, echo=FALSE}
-gap0 <- lm('log(y_ingLab_m)~woman', data = db)
-gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
-# gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
-mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
-```
 ```{r code_gap_sex, echo=FALSE}
 source(here::here("scripts", "00_packages.R"))
 source(here::here("scripts", "04_Brecha_Genero_2.R"))
