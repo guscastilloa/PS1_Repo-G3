@@ -7,22 +7,27 @@ author:
 - Jaime Orlando Buitrago González (200612390)
 date: "03 de marzo de 2024"
 output:
-  html_document:
-    df_print: paged
+  #html_document:
+    #df_print: paged
   pdf_document:
     number_sections: true
     fig_width: 3
     fig_height: 2
     fig_caption: true
+
 fontsize: 11pt
 geometry: margin=1in
 documentclass: article
 papersize: letter
 lang: es
 header-includes:
-- \usepackage[utf8]{inputenc}
-- \usepackage{floatrow}
-- \floatsetup[figure]{capposition=top}
+  - \usepackage[utf8]{inputenc}
+  - \usepackage{floatrow}
+  - \floatsetup[figure]{capposition=top}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+
 subtitle: Big Data y Machine Learning para Economía Aplicada
 bibliography: References.bib
 ---
@@ -30,8 +35,9 @@ bibliography: References.bib
 ```{r setup, include=FALSE}
 require(here)
 knitr::opts_chunk$set(echo = TRUE)
+
 #source("../scripts/00_packages.R", local = knitr::knit_global())
-library(ggplot2)
+#library(ggplot2)
 here::set_here(path = "../")
 source(here("scripts","00_packages.R"), local = knitr::knit_global())
 ```
@@ -165,14 +171,24 @@ Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad 
 
 En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión.
 
-```{r}
+
+
+\input{"../views/fit.tex"}
+
+
+```{r table, echo=FALSE, message=FALSE, results="asis"}
 # Leer el contenido del archivo LaTeX
-ruta_tabla <- "../views/fit.tex"
-contenido_tabla <- readLines(ruta_tabla)
+#ruta_tabla <- "../views/fit.tex"
+#contenido_tabla <- readLines(ruta_tabla)
 
 # Mostrar la tabla en formato LaTeX
-cat(contenido_tabla, sep = "\n")
+#cat(contenido_tabla, sep = "\n")
+
 ```
+
+
+
+
 En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
 
 $$
@@ -207,9 +223,20 @@ a) En esta sesión se intenta predecir la brecha salarial del logaritmo del ingr
 
 Los resultados de la regresión muestran que en promedio, el salario de una mujer es 4,37% menor en comparación con el salario de un hombre.Esto con un nivel de significacion del 5% y con un error estándar de 0.733.
 
+<<<<<<< Updated upstream
+=======
+```{r code_gap, echo=FALSE}
+gap0 <- lm('log(y_ingLab_m)~woman', data = db)
+gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
+# gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
+mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
+```
+
+>>>>>>> Stashed changes
 ```{r code_gap_sex, echo=FALSE}
-source(here::here("scripts", "00_packages.R"))
-source(here::here("scripts", "04_Brecha_Genero_2.R"))
+#source(here::here("scripts", "00_packages.R"))
+#source(here::here("scripts", "04_Brecha_Genero_2.R"))
+geih_select <- arrow::read_parquet("../stores/geih_select.parquet")
 reg1 <- lm(ln_wage ~ sex, data = geih_select)
 reg2 <- lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
 mean_wage_female <- exp(reg1$coefficients[[1]]+reg1$coefficients[[2]])
@@ -241,7 +268,7 @@ Por otra parte, estimando el modelo con FWL y boostrap se puede apreciar que el 
 
 
 c) 
-```{r echo=FALSE, message=FALSE,file="../views/earnings_peak_ages.PNG",fig.align = 'center', fig.cap="Perfil de ingresos vs edad por sexo", dpi=300}
+```{r echo=FALSE, message=FALSE, out.width="70%" , fig.cap="Perfil de ingresos vs edad por sexo"}
 knitr::include_graphics('../views/earnings_peak_ages.png')
 ```
 \begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
