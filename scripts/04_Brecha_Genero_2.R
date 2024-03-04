@@ -1,8 +1,8 @@
-################################################################################
+###############################################################################-
 # Problem Set 1 - Question 3
 # Authors: Jorge Luis Congacha Yunda
 # Descripción: Brecha salarial
-################################################################################
+###############################################################################-
 
 # Prepare workspace
 rm (list=ls())
@@ -16,11 +16,11 @@ gc()
 datos_geih<-read_parquet("../stores/geih.parquet")
 #View(datos_geih)
 
-################################################################################
-# 1. limpieza de base de datos.
-# 1.1 Selección de observaciones 
+###############################################################################-
+# 1. Preparar base y tratar valores faltantes ------
+###############################################################################-
 
-#################################################################################
+# 1.1 Selección de observaciones 
 #Definir los posibles predictores de la base de datos: 
 
 geih_select <- datos_geih  %>% select(y_total_m_ha,
@@ -112,7 +112,9 @@ geih_select <- geih_select  %>% mutate(ln_wage = log(y_ingLab_m_ha))
 
 
 
-####################################################################################
+##############################################################################-
+# 2. Estimaciones ------------------
+##############################################################################-
 
 
 stargazer(data.frame(datos_geih), header=FALSE, type='text', title="Variables incluidas")
@@ -124,13 +126,15 @@ geih_select <- geih_select[complete.cases(geih_select$ln_wage) & is.finite(geih_
 geih_select$sex <- ifelse(geih_select$sex == 1, 0, 1)
 table(geih_select$sex)
 
-# A) Estimación de la brecha salarial incondicional. Log(w)= β1 + β2Female + u
+## A) Estimación de la brecha salarial incondicional -----
+# Log(w)= β1 + β2Female + u
 reg1 <- lm(ln_wage ~ sex, data = geih_select)
 summary(reg1)
 
 stargazer(reg1, digits=3, align=TRUE, type="latex", out="../views/4reg1.tex" , omit.stat = c("adj.rsq", "f", "ser"))
 
-#B) Estimación de brecha salarial condicional incorporando variables de control como características similares de trabajadores y puestos de trabajo.
+## B) Estimación de brecha salarial condicional  ---------
+# incorporando variables de control como características similares de trabajadores y puestos de trabajo.
 
 reg2<-lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
 stargazer(reg2,type="text",digits=3 , omit.stat = c("adj.rsq", "f", "ser")) 
@@ -141,7 +145,7 @@ summary(reg2)
 # Eliminación de una fila con valores faltantes en todas las variables utilizadas en el modelo
 geih_select <- geih_select[complete.cases(geih_select[, c("sex", "posicion", "oficio", "ocupacion", "formal", "microEmpresa", "maxEducLevel", "edad")]), ]
 
-## i) Usamos FWL
+### i) Usamos FWL -----------------------------------------------
 
 geih_select<- geih_select %>% mutate(woman_res=lm(as.numeric(sex) ~ posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
 geih_select<- geih_select %>% mutate(log_wage_res=lm(ln_wage ~ posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de logy~x
@@ -152,7 +156,7 @@ reg3<- lm(log_wage_res~woman_res, geih_select)
 stargazer(reg3,type="text",digits=3 ) 
 stargazer(reg3, reg1 , digits=3, align=TRUE, type="latex", out="../views/4reg3.tex" , omit.stat = c("adj.rsq", "f", "ser"))
 
-## ii) FWL con boostrap
+### ii) FWL con boostrap ---------------------------------------
 
 btrap<-function(data,index){
   data<-data %>% mutate(woman_res=lm(as.numeric(sex)~posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, geih_select)$residuals) #obtenemos los residuales de sex~x
@@ -164,13 +168,15 @@ btrap(geih_select,1:nrow(geih_select))
 
 boot(geih_select, btrap, R = 2000) 
 
-# C) Gráficamos la predición salario-edad, y estimación de las edades donde se logra el mayor slario con los respectivos intervalaos de confianza por género. 
-## - estimacion de los coeficientes 
+## C) Gráficamos la predición salario-edad, y estimación de las edades donde se
+# logra el mayor slario con los respectivos intervalaos de confianza por género. 
+#- estimacion de los coeficientes 
 
 mod0 <- lm(ln_wage ~ edad + I(edad^2), data = geih_select, subset = (sex == 0))
 mod1 <- lm(ln_wage ~ edad + I(edad^2), data = geih_select, subset = (sex == 1))
 
-## Realizamos el gráfico usando los coeficientes estimados. Con esto generamos un gráfico de ingresos en funcion de la edad. 
+## Realizamos el gráfico usando los coeficientes estimados. 
+# Con esto generamos un gráfico de ingresos en funcion de la edad. 
 
 age <- seq(min(geih_select$edad), max(geih_select$edad), by = 1)  # edades
 
