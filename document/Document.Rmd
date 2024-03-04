@@ -28,6 +28,7 @@ header-includes:
   - \usepackage{array}
   - \usepackage{multirow}
   - \usepackage{dcolumn}
+  - \usepackage{float}
 
 subtitle: Big Data y Machine Learning para Economía Aplicada
 bibliography: References.bib
@@ -35,7 +36,7 @@ bibliography: References.bib
 
 ```{r setup, include=FALSE}
 require(here)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, fig.pos = 'H')
 
 #source("../scripts/00_packages.R", local = knitr::knit_global())
 #library(ggplot2)
@@ -120,11 +121,13 @@ stargazer(stats[c("y_ingLab_m_ha", "exp", "age", "esc")],
 
 ```
 
+
 Como se observa en la tabla anterior, tres de las cuatro variables por incluir tienen valores perdidos. La variable ingreso laboral con 6.650 observaciones, y experiencia laboral y años de escolaridad con 1 observación. En el primer caso, siguiendo las recomendaciones de @ln, se utilizó una transformación logarítmica del salario sumando una unidad, de tal manera que los valores perdidos puedan ser utilizados. Para las otras dos variables, se remplazaron con los valores promedios, toda vez que representa 1 sola observación y se puede asemejar a un individuo representativo de Bogotá. De esta manera, las distribuciones de estas variables con sus ajustes se observan a continuación:
 
 ```{r grap00, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Distribución variables continuas", dpi=300}
 knitr::include_graphics('../views/g1.jpg')
 ```
+\begin{center}\footnotesize{Nota: Líneas azules promedios}\end{center}
 
 Como se observa en las gráficas de distribución anteriores, la población ocupada vive situaciones de desigualdad. El ingreso se concentra en los niveles más bajos y una muy baja concentración en los ingresos más altos. De igual manera, la mayor parte de la población alcanza hasta 11 grados de escolaridad (culminación de la educación media), con una importante acumulación en la población con 9 años (grado noveno). No obstante, la concentración de la población con 16 años de escolaridad (pregrado universitario) muestra la oportunidad que representa el capital humano acumulado de la ciudad.
 
@@ -157,6 +160,14 @@ papaja::apa_table(
 ```
 
 En su conjunto, los ocupados se emplean en las actividades económicas asociadas a Servicios representan el 84,1\% de la población ocupada, por su parte quienes se dedican a las actividades a producción de Bienes son el 15,9\% de la población ocupada. Como un equilibrio desde el punto de vista de la oferta, es factible pensar una participación similar de la demanda, es decir, un tejido empresarial bogotano compuesto principalmente por actividades económicas asociadas a los Servicios en la ciudad de Bogotá.
+
+Finalmente, en esta sección de descripción de variables se realizaron gráficas de dispersión de las variables por incluir en los modelos frente al ingreso laboral por horas. En el siguiente conjunto de gráficos, se encuentran los gráficos de dispersión de la Experiencia laboral, Años de escolaridad y Sexo, además se encuentran en azul los promedios según cada nivel de las variables en el eje $X$. Como se observa, las relaciones entre las variables no son lineales, lo cual como se verá más adelante implica incluir en los modelos polinomios y conseguir un mejor ajuste.
+
+```{r grap02, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Gráficos de dispersión. Años de escolaridad, Edad y Experiencia laboral", dpi=300}
+knitr::include_graphics('../views/g2_1.jpg')
+```
+
+\begin{center}\footnotesize{Nota: Puntos azules romedio condicional}\end{center}
 
 # Modelo
 El modelo 
@@ -224,8 +235,8 @@ Los resultados de la regresión muestran que en promedio, el salario de una muje
 
 
 ```{r code_gap, echo=FALSE}
-gap0 <- lm('log(y_ingLab_m)~woman', data = db)
-gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
+gap0 <- lm('log(y_ingLab_m_ha)~woman', data = db)
+gap1 <- lm('log(y_ingLab_m_ha)~age+woman+esc+p6430+sector', data = stats)
 # gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
 mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
 ```
