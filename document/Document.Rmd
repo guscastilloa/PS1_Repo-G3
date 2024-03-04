@@ -163,58 +163,68 @@ En su conjunto, los ocupados se emplean en las actividades económicas asociadas
 
 Finalmente, en esta sección de descripción de variables se realizaron gráficas de dispersión de las variables por incluir en los modelos frente al ingreso laboral por horas. En el siguiente conjunto de gráficos, se encuentran los gráficos de dispersión de la Experiencia laboral, Años de escolaridad y Sexo, además se encuentran en azul los promedios según cada nivel de las variables en el eje $X$. Como se observa, las relaciones entre las variables no son lineales, lo cual como se verá más adelante implica incluir en los modelos polinomios y conseguir un mejor ajuste.
 
+
 ```{r grap02, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Gráficos de dispersión. Años de escolaridad, Edad y Experiencia laboral", dpi=300}
 knitr::include_graphics('../views/g2_1.jpg')
 ```
+
+# Modelo
+Para realizar la predicción salarial, el principal objetivo de este problem set es 
+construir un modelo de ingreso laboral por hora de los habitantes de Bogotá mayores de 18 años. Por lo tanto, la ecuación que se estimará es la siguiente: 
+
+$$
+log(salario_i) = f(X) + u_i 
+$$
+Dónde $log(salario_i)$ es el salario por hora para cada individuo $i$,$X$ es una matrix
+de variables que explican el salario. Para nuestro modelo, se seleccionaron como posibles predictoras las horas trabajadas a la semana(en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo(hay evidencia de que existe una brecha salarial entre hombres y mujeres), Posición ocupacional(los salarios dependen de la posición organizacional de las personas), sector(existen sectores con mayores rendimientos que otros), experiencia(las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y escolaridad(en la medida que las personas tienen mayor capacitación). Finalmente, los $\beta$ representan un  vector de parámetros que cuantifican la relación entre las variables $X$ y los salarios. 
+
 
 \begin{center}\footnotesize{Nota: Puntos azules romedio condicional}\end{center}
 
 # Perfiles de salario por edad
 
-
-Para empezar a caracterizar los determinantes de los salarios, vamos a realizar 
-una estimación que explore la relación entre ingresos y edad. Existe literatura que 
+Para empezar a caracterizar los determinantes de los salarios, se realiza
+una estimación que explora la relación entre ingresos y edad. Existe literatura que 
 encuentra que los salarios tienden a seguir una distribución de u invertida, en la 
-que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los salarios (Skirbekk, 2004). Entre las 
-posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
+que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los ingresos laborales (@skirbekk2004age). 
+Una de las posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
 
-Estudiar esta relación es importante en la medida en que es importante determinar los salarios por edad con el fin de realizar un perfilamiento de los ingresos por grupos de edad. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados 
-Ordinarios para analizar la relación entre salarios y edad: 
+Estudiar la relación entre estas variables permite realizar un perfilamiento de los ingresos por grupos de edad,lo cuál puede contribuir a calcular con mayor precisión los impuestos que debe pagar cada indivuo e identificar personas en situación de vulnerabilidad con el fin de focalizar programas de ayuda. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados Ordinarios para analizar esta relación: 
 
 $$
 log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
 $$
-Dónde $Salario_i$ corresponde a los ingresos asalariados + independientes total nominal por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar
-la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
+Dónde $Salario_i$ corresponde a los ingresos vía salarios por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad y el cuadrado de la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
 
-Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), decidimos hacer un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que agregamos son: horas trabajadas a la semana, el sexo de los individuos, ocupación, tipo de ocupación y su máximo nivel educativo. 
+Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), se realiza un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que se agregaron son: horas trabajadas a la semana, el sexo(variable dicotómica que toma el valor de 1 si es hombre), Posición ocupacional, sector,experiencia(medida en años) y escolaridad(medida en años). 
 
 
-En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión.
+En la tabla 3 se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles.Se puede apreciar que, en promedio, un año adicional en la edad está asociado con un incremento en el salario del 6.7% (modelo sin controles) y del 14.7% (modelo con controles). Estos estimadores indican que la edad es un factor determinante del salario. Además, la diferencia entre el modelo con controles y sin controles puede obedecer a que el modelo sin controles puede estar sesgado en la medida en la que no condiciona por múltiples variables que afectan los salarios y la edad(por ejemplo, la experiencia y la escolaridad).  Sin embargo, debido a que se estima  una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque se debe tener en cuenta el $\beta_2$ de la regresión.
 
 
 \input{"../views/fit.tex"}
 
-En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
+En cuanto al coeficiente de la variable edad al cuadrado, no existe una gran diferencia en magnitud para los dos modelos y coinciden en el signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, se deriva la ecuación estimada con respecto a la edad: 
 
 $$
 \frac{\partial log(salario)}{\partial Edad} =\beta_1  +2 \beta_2 Edad
 $$
 
-Encontramos que la interpretación depende del nivel de edad que se analiza. Para realizar el análisis, estimamos la edad promedio de la base de datos (38 años). Encontramos que, para un individuo con una edad de 38 años, un año adicional está asociado con un aumento en el salario del 1.7%. Para la interpretación del  $\beta_{0}$, sería como el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Aunque esta puede tener una intepretación poco intuitiva, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el salario promedio cuando los individuos inician su vida laboral.  
+La anterior ecuación indica  que la interpretación depende del valor de la edad. Para analizar esta relación, estimamos la edad promedio de la base de datos (39 años). Encontramos que, para un individuo con una edad de 39 años, un año adicional está asociado con un aumento en el salario del 0.93%(para el modelo sin controles) y del 11.32%(para el modelo con controles). La interpretación del  $\beta_{0}$, sería el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Sin embargo, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el logaritmo del salario promedio cuando los individuos inician su vida laboral.  
 
-En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
+En cuanto a la interpretación del coeficiente de determinación(R2) nos indica que, aproximadamente, el 4.4%  de la variación del logaritmo del salario es explicada por la edad. Aunque este R2 puede ser bajo, es explicado porque existen muchos más factores que determinan el salario. Por esto, cuando se observa el R2 del modelo con controles, se encuentra que el R2 ajustado se incrementa hasta aproximadamente el 47%. Además, tanto la edad como la edad al cuadrado son estadísticamente significativas, lo que indican que existe un buen ajuste del modelo. 
 
-Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de las personas. Para hacerlo, debemos encontrar el punto máximo de la función que estimamos e igualar a cero. Haciendo el procedimiento, obtenemos que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta ecuación, encontramos que la edad máxima en la que se alcanza el máximo rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es esperado según la literatura (citar literatura). 
+Además, esta regresión permite encontrar el punto de inflexión en el que el rendimiento de la edad sobre el salario comienza a disminuir. Se puede  encontrar el punto máximo de la función que estimamos al derivar la ecuación con respecto a la edad e igualar a cero. Al hacer  el procedimiento, se obtiene que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta expresión, la edad en la que se alcanza el máximo rendimiento de los salarios es a los 45.30 años. 
 
-Para analizar esto mejor, en la figura tal se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se puede observar que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razaones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
+La figura 1 se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se aprecia que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo rendimiento a los 45 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
 
-En la fráfica anterior también se pueden observar los intervalos de confianza al nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar boortraps, en la que se relizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumeta, esto puede deberse a que existe mucha heterogeneidad de salarios en las personas con edades mayores, porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales, por ejemplo) mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que sus salarios disminuirían. 
-
-```{r echo=FALSE, message=FALSE}
+```{r include_image, echo=FALSE, fig.cap="Perfil de salario - edad",fig.align='center', fig.pos='H'}
 
 knitr::include_graphics('../views/age_earnings_plot.png')
 ```
+
+Adicionalmente, el anterior gráfico también permite observar los intervalos de confianza con un nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar bootstrap, en la que se realizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumenta. Una posible explicación es que existe mucha heterogeneidad de salarios en las personas con mayor edad,porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales), mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que los rendimientos de los ingresos serán bajos.  
+
 
 
 # Brechas de ingreso por sexo
@@ -304,24 +314,4 @@ Sin embargo, dado que la gráfica solo considera la edad y el coeficiente de det
 # Referencias bibliográficas
 
 <div id="refs"></div>
-
-# Ejemplos
-
-Para incrustar código y resultados de la consola
-
-```{r cars}
-summary(cars)
-```
-
-Para incluir ecuaciones
-
-$$
-w=f(X)+u
-$$
-
-Para incluir gráficas
-
-```{r echo=FALSE, message=FALSE,file="../scripts/Code.R",fig.align = 'center', fig.cap="Título de la gráfica", dpi=300}
-```
-\begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
