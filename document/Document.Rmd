@@ -89,8 +89,7 @@ En la página web se encuentran 10 tablas en formato HTML, las cuales contienen 
 
 Como complemento, se descargaron y unieron las bases de datos de la GEIH de 2018 [@dane], de tal manera que se obtuviesen variables complementarias para el desarrollo del Problem Set. Más específicamente, los años de escolaridad, la rama de actividad \footnote{Código a dos dígitos de la Clasificación Industrial Internacional Uniforme de todas las actividades Económicas (CIIU).} y la pregunta sobre la posición ocupacional de las personas ocupadas. De esta manera, se obtuvieron variables complementarias como escolaridad como variable continua, experiencia laboral \footnote{ Variable *proxy* construida como  Edad-Años de escolaridad-Años de ingreso al sistema educativo (6 años)}, sector económico y posición ocupacional.
 
-Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos.
-
+Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos. Como los objetivos asociados al uso de los datos tiene fines predictivos, se prescinde de la variable de los factores de expansión, con los cuales se hace inferencias sobre la población. Por consiguiente, en adelante todos los resultados hacen mención a la muestra de la GEIH.
 
 ```{r descriptive_continuos, echo=FALSE, results='asis'}
 
@@ -101,14 +100,16 @@ stats <- stats %>% mutate(woman=1-sex,
                                        labels=c('Hombre','Mujer'))
                           )
 
+stats$exp <- ifelse(stats$exp<0,0,stats$exp)
+
 stats <- data.frame(stats%>%
-                      select(c(y_ingLab_m, exp, age, esc, 
+                      select(c(y_ingLab_m_ha, exp, age, esc, 
                                woman, sector, p6430)))
 
 stats[,1] <- stats[,1]/1000
 
-stargazer(stats[c("y_ingLab_m", "exp", "age", "esc")], 
-          type = "latex", median = TRUE, digits =2, 
+stargazer(stats[c("y_ingLab_m_ha", "exp", "age", "esc")], 
+          type = "latex", median = TRUE, digits =3, 
           covariate.labels = c("Ingreso laboral (miles)",
                           "Experiencia laboral",
                           "Edad",
@@ -118,6 +119,19 @@ stargazer(stats[c("y_ingLab_m", "exp", "age", "esc")],
           table.placement = "H")
 
 ```
+
+Como se observa en la tabla anterior, tres de las cuatro variables por incluir tienen valores perdidos. La variable ingreso laboral con 6.650 observaciones, y experiencia laboral y años de escolaridad con 1 observación. En el primer caso, siguiendo las recomendaciones de @ln, se utilizó una transformación logarítmica del salario sumando una unidad, de tal manera que los valores perdidos puedan ser utilizados. Para las otras dos variables, se remplazaron con los valores promedios, toda vez que representa 1 sola observación y se puede asemejar a un individuo representativo de Bogotá. De esta manera, las distribuciones de estas variables con sus ajustes se observan a continuación:
+
+```{r grap00, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Distribución variables continuas", dpi=300}
+knitr::include_graphics('../views/g1.jpg')
+```
+
+Como se observa en las gráficas de distribución anteriores, la población ocupada vive situaciones de desigualdad. El ingreso se concentra en los niveles más bajos y una muy baja concentración en los ingresos más altos. De igual manera, la mayor parte de la población alcanza hasta 11 grados de escolaridad (culminación de la educación media), con una importante acumulación en la población con 9 años (grado noveno). No obstante, la concentración de la población con 16 años de escolaridad (pregrado universitario) muestra la oportunidad que representa el capital humano acumulado de la ciudad.
+
+En cuanto a la experiencia laboral y la edad tienen una gráfica de distribución similar, dado que la primera es un **proxy** que se construye a partir de la edad y los años de escolaridad. Claro está, para el 2018, se observa que aproximadamente hasta el 75\% de la población ocupada es menor de 50 años, con una caída en la curva en la distribución a partir de los 60 años. Esta situación muestra no sólo que una vez se alcanza la edad de pensión, muchas personas probablemente pasan a ser inactivos, sino también una fuerza laboral ocupada principalmente compuesta por población en edad de trabajar, representando una oportunidad para el desarrollo económico y social de Bogotá.
+
+Como variables relevantes para incluir dentro de los modelos para la predicciones se consideraron la posición ocupacional, el sector y desde luego el sexo, cuyos valores absolutos y proporciones se observan en la siguiente tabla. Como se observa, las mujeres tienen una menor acceso al empleo dentro del mercado laboral en comparación a los hombres, pues son representan el 47\% de la población ocupada. En cuanto al sector económico, predomina el comercio con un 37,7\% de los ocupados en Bogotá, no es fortuito así encontrar una importante participación de los trabajadores por cuenta propia (30,9\%), es decir, dos situaciones que muestran un mercado laboral en el que son propicias las condiciones del empleo informal.
+
 
 ```{r descriptive_categorical, echo=FALSE, results='asis'}
 
@@ -142,8 +156,7 @@ papaja::apa_table(
 
 ```
 
-De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
-
+En su conjunto, los ocupados se emplean en las actividades económicas asociadas a Servicios representan el 84,1\% de la población ocupada, por su parte quienes se dedican a las actividades a producción de Bienes son el 15,9\% de la población ocupada. Como un equilibrio desde el punto de vista de la oferta, es factible pensar una participación similar de la demanda, es decir, un tejido empresarial bogotano compuesto principalmente por actividades económicas asociadas a los Servicios en la ciudad de Bogotá.
 
 # Modelo
 El modelo 
@@ -253,9 +266,10 @@ Por otra parte, estimando el modelo con FWL y boostrap se puede apreciar que el 
 
 
 c) 
-```{r echo=FALSE, message=FALSE, out.width="70%" , fig.cap="Perfil de ingresos vs edad por sexo"}
+```{r grap01, echo=FALSE, message=FALSE, out.width="70%" , fig.cap="Perfil de ingresos vs edad por sexo"}
 knitr::include_graphics('../views/earnings_peak_ages.png')
 ```
+
 \begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
 Para identificar las edades en las que tanto hombres como mujeres alcanzan sus mayores ingresos laborales, realizamos dos análisis por separado: uno para hombres y otro para mujeres. Primero, ajustamos modelos de regresión a los datos de cada grupo y luego realizamos las predicciones correspondientes. Se uso la técnica de bootstrap para calcular los valores de los picos de ingresos, representados por la fórmula \[\frac{{-B_1}}{{2 \cdot B_2}}\], junto con sus intervalos de confianza. Los resultados de ambas regresiones son estadísticamente significativos, lo que indica que la edad explica parte de la variabilidad en el logaritmo de los salarios, todavía queda una parte considerable de la variabilidad que no se explica.
