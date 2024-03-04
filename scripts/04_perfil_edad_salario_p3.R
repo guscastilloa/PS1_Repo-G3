@@ -5,6 +5,7 @@
 #edad. 
 ################################################################################
 
+
 # Preparar el análisis 
 rm (list=ls())
 source("scripts/00_packages.R")
@@ -12,6 +13,7 @@ gc()
 
 #Cargar la base de datos 
 datos_geih<-read_parquet("stores/db.parquet")
+
 
 #Definir los posibles predictores de la base de datos: 
 geih_select <- datos_geih  %>% select(y_total_m_ha, y_ingLab_m_ha,
@@ -57,6 +59,7 @@ regression_table <- readLines("views/fit.tex")
 regression_table <- gsub("Observations", "Observaciones", regression_table)
 regression_table <- gsub("Adjusted R$^{2}$ ", "R$^{2}$ ajustado", regression_table)
 
+
 # Escribir el contenido modificado de nuevo al archivo
 writeLines(regression_table, "views/fit.tex")
 
@@ -66,6 +69,7 @@ matrix_coef
 coeficiente_edad<-my_estimates <- matrix_coef[2, 1] 
 coeficiente_edad2<-my_estimates <- matrix_coef[3, 1] 
 coeficiente_edad2
+
 
 #Obtener la edad máxima en la que el incremento en el salario empieza a disminuir(C)
 matrix_coef <- summary(reg_age_c)$coefficients
