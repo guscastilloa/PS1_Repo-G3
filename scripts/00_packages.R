@@ -40,7 +40,8 @@ p_load(tidyverse , # tidy-data
        arrow,
        visdat,
        boot,
-       papaja)
+       papaja,
+       xtable)
 
 # solve package conflicts
 filter = dplyr::filter
