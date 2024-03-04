@@ -76,8 +76,8 @@ ggsave("views/relab.png", plot = relab, width = 6, height = 4, dpi = 300)
 
 #REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u (también le vamos a agregar
 #algunas variables explicativas adicionales)
-reg_age_c <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+age+sex+oficio+relab+
-                college+ ocu+ maxEducLevel, geih_select)
+reg_age_c <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+sex+oficio+relab+
+                college+ maxEducLevel, geih_select)
 summary(reg_age_c)
 
 reg_age_sc <- lm(ln_wage ~ age + agesqr, geih_select)
