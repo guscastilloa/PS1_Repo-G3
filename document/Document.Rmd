@@ -169,10 +169,6 @@ knitr::include_graphics('../views/g2_1.jpg')
 
 \begin{center}\footnotesize{Nota: Puntos azules romedio condicional}\end{center}
 
-# Modelo
-El modelo 
-
-
 # Perfiles de salario por edad
 
 
