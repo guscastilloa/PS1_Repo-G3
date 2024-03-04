@@ -303,6 +303,36 @@ Sin embargo, dado que la gráfica solo considera la edad y el coeficiente de det
 
 # Predicción de salarios
 
+```{=tex}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Mon Mar  4 15:15:49 2024
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrr}
+  \toprule
+Especificación & Test RMSE & Grados de Libertado & Número de Predictores \\ 
+  \midrule
+Solo Sexo & 0.72 & 6924 &   1 \\ 
+  Edad + Edad² & 0.71 & 6923 &   2 \\ 
+  Controles 1 & 0.50 & 6832 &  94 \\ 
+  Controles 2 & 0.50 & 6831 &  95 \\ 
+  Controles 3 & 0.45 & 6820 & 115 \\ 
+  Edad v1 & 0.71 & 6920 &   5 \\ 
+  Controles 1 v1 & 0.50 & 6830 &  96 \\ 
+  Controles 2 v1 & 0.50 & 6827 &  99 \\ 
+  Contorles 3 v1 & 0.45 & 6814 & 121 \\ 
+  Controles 3 v2 & 0.45 & 6807 & 128 \\ 
+   \bottomrule
+\end{tabular}
+\caption{Comparación RMSE con 70% muestra de entrenamiento} 
+\end{table}
+
+
+
+```
+
+
+
 # Referencias bibliográficas
 
 <div id="refs"></div>
