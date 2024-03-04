@@ -28,6 +28,7 @@ header-includes:
   - \usepackage{array}
   - \usepackage{multirow}
   - \usepackage{dcolumn}
+  - \usepackage{float}
 
 subtitle: Big Data y Machine Learning para Economía Aplicada
 bibliography: References.bib
@@ -35,7 +36,7 @@ bibliography: References.bib
 
 ```{r setup, include=FALSE}
 require(here)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, fig.pos = 'H')
 
 #source("../scripts/00_packages.R", local = knitr::knit_global())
 #library(ggplot2)
@@ -74,7 +75,7 @@ de los impuestos. En Indonesia, a través de modelos predictivos se identificaro
 
 Es por tanto, que en este Problem Set busca predecir el ingreso por hora de los y las bogotanas mediante modelos que aprovechan las herramientas del ML, haciendo uso de la principal encuesta de hogares colombiana.  Más específicamente, se utilizó la *Medición de Pobreza Monetaria y Desigualdad* [@geih] del 2018 para Bogotá, un módulo de la *Gran Encuesta Integrada de Hogares* (GEIH) del DANE, la cual no sólo proporciona información sobre el mercado laboral, ingreso de las personas, características socioeconómicas y territoriales, si no a su vez representa una fuente de información confiable en la cual las personas no tienen incentivos a reportar información falsa sobre su ingreso, pues la encuesta es anónima y no tiene una finalidad tributaria.
 
-En este contexto, el presente documento ...(preview of the results an main takeaways)
+En este contexto, el presente documento explora diferentes estimaciones de los salarios a partir modelos de regresión por minimos cuadrados ordinarios, Frisch-Waugh-Lovell (FWL) y Leave-one-out-cross-validation (LOOCV). A través de los resultados empíricos y prácticos se obtienes resultados susceptibles de ser aplicados.
 
 
 # Datos
@@ -89,8 +90,7 @@ En la página web se encuentran 10 tablas en formato HTML, las cuales contienen 
 
 Como complemento, se descargaron y unieron las bases de datos de la GEIH de 2018 [@dane], de tal manera que se obtuviesen variables complementarias para el desarrollo del Problem Set. Más específicamente, los años de escolaridad, la rama de actividad \footnote{Código a dos dígitos de la Clasificación Industrial Internacional Uniforme de todas las actividades Económicas (CIIU).} y la pregunta sobre la posición ocupacional de las personas ocupadas. De esta manera, se obtuvieron variables complementarias como escolaridad como variable continua, experiencia laboral \footnote{ Variable *proxy* construida como  Edad-Años de escolaridad-Años de ingreso al sistema educativo (6 años)}, sector económico y posición ocupacional.
 
-Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos.
-
+Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos. Como los objetivos asociados al uso de los datos tiene fines predictivos, se prescinde de la variable de los factores de expansión, con los cuales se hace inferencias sobre la población. Por consiguiente, en adelante todos los resultados hacen mención a la muestra de la GEIH.
 
 ```{r descriptive_continuos, echo=FALSE, results='asis'}
 
@@ -101,14 +101,16 @@ stats <- stats %>% mutate(woman=1-sex,
                                        labels=c('Hombre','Mujer'))
                           )
 
+stats$exp <- ifelse(stats$exp<0,0,stats$exp)
+
 stats <- data.frame(stats%>%
-                      select(c(y_ingLab_m, exp, age, esc, 
+                      select(c(y_ingLab_m_ha, exp, age, esc, 
                                woman, sector, p6430)))
 
 stats[,1] <- stats[,1]/1000
 
-stargazer(stats[c("y_ingLab_m", "exp", "age", "esc")], 
-          type = "latex", median = TRUE, digits =2, 
+stargazer(stats[c("y_ingLab_m_ha", "exp", "age", "esc")], 
+          type = "latex", median = TRUE, digits =3, 
           covariate.labels = c("Ingreso laboral (miles)",
                           "Experiencia laboral",
                           "Edad",
@@ -118,6 +120,21 @@ stargazer(stats[c("y_ingLab_m", "exp", "age", "esc")],
           table.placement = "H")
 
 ```
+
+
+Como se observa en la tabla anterior, tres de las cuatro variables por incluir tienen valores perdidos. La variable ingreso laboral con 6.650 observaciones, y experiencia laboral y años de escolaridad con 1 observación. En el primer caso, siguiendo las recomendaciones de @ln, se utilizó una transformación logarítmica del salario sumando una unidad, de tal manera que los valores perdidos puedan ser utilizados. Para las otras dos variables, se remplazaron con los valores promedios, toda vez que representa 1 sola observación y se puede asemejar a un individuo representativo de Bogotá. De esta manera, las distribuciones de estas variables con sus ajustes se observan a continuación:
+
+```{r grap00, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Distribución variables continuas", dpi=300}
+knitr::include_graphics('../views/g1.jpg')
+```
+\begin{center}\footnotesize{Nota: Líneas azules promedios}\end{center}
+
+Como se observa en las gráficas de distribución anteriores, la población ocupada vive situaciones de desigualdad. El ingreso se concentra en los niveles más bajos y una muy baja concentración en los ingresos más altos. De igual manera, la mayor parte de la población alcanza hasta 11 grados de escolaridad (culminación de la educación media), con una importante acumulación en la población con 9 años (grado noveno). No obstante, la concentración de la población con 16 años de escolaridad (pregrado universitario) muestra la oportunidad que representa el capital humano acumulado de la ciudad.
+
+En cuanto a la experiencia laboral y la edad tienen una gráfica de distribución similar, dado que la primera es un **proxy** que se construye a partir de la edad y los años de escolaridad. Claro está, para el 2018, se observa que aproximadamente hasta el 75\% de la población ocupada es menor de 50 años, con una caída en la curva en la distribución a partir de los 60 años. Esta situación muestra no sólo que una vez se alcanza la edad de pensión, muchas personas probablemente pasan a ser inactivos, sino también una fuerza laboral ocupada principalmente compuesta por población en edad de trabajar, representando una oportunidad para el desarrollo económico y social de Bogotá.
+
+Como variables relevantes para incluir dentro de los modelos para la predicciones se consideraron la posición ocupacional, el sector y desde luego el sexo, cuyos valores absolutos y proporciones se observan en la siguiente tabla. Como se observa, las mujeres tienen una menor acceso al empleo dentro del mercado laboral en comparación a los hombres, pues son representan el 47\% de la población ocupada. En cuanto al sector económico, predomina el comercio con un 37,7\% de los ocupados en Bogotá, no es fortuito así encontrar una importante participación de los trabajadores por cuenta propia (30,9\%), es decir, dos situaciones que muestran un mercado laboral en el que son propicias las condiciones del empleo informal.
+
 
 ```{r descriptive_categorical, echo=FALSE, results='asis'}
 
@@ -142,59 +159,65 @@ papaja::apa_table(
 
 ```
 
-De las `r nrow(db)` observaciones, se puede observar la tasa de valores perdidos de las variables de interés:
+En su conjunto, los ocupados se emplean en las actividades económicas asociadas a Servicios representan el 84,1\% de la población ocupada, por su parte quienes se dedican a las actividades a producción de Bienes son el 15,9\% de la población ocupada. Como un equilibrio desde el punto de vista de la oferta, es factible pensar una participación similar de la demanda, es decir, un tejido empresarial bogotano compuesto principalmente por actividades económicas asociadas a los Servicios en la ciudad de Bogotá.
 
+Finalmente, en esta sección de descripción de variables se realizaron gráficas de dispersión de las variables por incluir en los modelos frente al ingreso laboral por horas. En el siguiente conjunto de gráficos, se encuentran los gráficos de dispersión de la Experiencia laboral, Años de escolaridad y Sexo, además se encuentran en azul los promedios según cada nivel de las variables en el eje $X$. Como se observa, las relaciones entre las variables no son lineales, lo cual como se verá más adelante implica incluir en los modelos polinomios y conseguir un mejor ajuste.
+
+
+```{r grap02, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Gráficos de dispersión. Años de escolaridad, Edad y Experiencia laboral", dpi=300}
+knitr::include_graphics('../views/g2_1.jpg')
+```
+\begin{center}\footnotesize{Nota: Puntos azules romedio condicional}\end{center}
 
 # Modelo
-El modelo 
+Para realizar la predicción salarial, el principal objetivo de este problem set es construir un modelo de ingreso laboral por hora de los habitantes de Bogotá mayores de 18 años. Por lo tanto, la ecuación que se estimará es la siguiente: 
+
+$$
+log(salario_i) = f(X) + u_i 
+$$
+Dónde $log(salario_i)$ es el salario por hora para cada individuo $i$,$X$ es una matrix de variables que explican el salario. Para nuestro modelo, se seleccionaron como posibles predictoras las horas trabajadas a la semana(en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo(hay evidencia de que existe una brecha salarial entre hombres y mujeres), Posición ocupacional(los salarios dependen de la posición organizacional de las personas), sector(existen sectores con mayores rendimientos que otros), experiencia(las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y escolaridad(en la medida que las personas tienen mayor capacitación). Finalmente, los $\beta$ representan un  vector de parámetros que cuantifican la relación entre las variables $X$ y los salarios. 
 
 
 # Perfiles de salario por edad
 
+Para empezar a caracterizar los determinantes de los salarios, se realiza una estimación que explora la relación entre ingresos y edad. Existe literatura que encuentra que los salarios tienden a seguir una distribución de u invertida, en la que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los ingresos laborales (@skirbekk2004age). 
 
-Para empezar a caracterizar los determinantes de los salarios, vamos a realizar 
-una estimación que explore la relación entre ingresos y edad. Existe literatura que 
-encuentra que los salarios tienden a seguir una distribución de u invertida, en la 
-que el máximo salario se obtiene a los 50 años. A partir de esta edad, comienza a observarse disminuciones significativas en los salarios (Skirbekk, 2004). Entre las 
-posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
+Una de las posibles explicaciones de este suceso está relacionado con la productividad. Las personas cuando comienzan su vida laboral tienden a tener menos experiencia y habilidades especializadas, por lo que sus salarios son más bajos al inicio de sus carreras.  A partir de algún momento de la edad adulta, las capacidades cognitivas y físicas empiezan a disminuir. 
 
-Estudiar esta relación es importante en la medida en que es importante determinar los salarios por edad con el fin de realizar un perfilamiento de los ingresos por grupos de edad. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados 
-Ordinarios para analizar la relación entre salarios y edad: 
+Estudiar la relación entre estas variables permite realizar un perfilamiento de los ingresos por grupos de edad,lo cuál puede contribuir a calcular con mayor precisión los impuestos que debe pagar cada indivuo e identificar personas en situación de vulnerabilidad con el fin de focalizar programas de ayuda. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados Ordinarios para analizar esta relación: 
 
 $$
 log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
 $$
-Dónde $Salario_i$ corresponde a los ingresos asalariados + independientes total nominal por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar
-la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
+Dónde $Salario_i$ corresponde a los ingresos vía salarios por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad y el cuadrado de la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
 
-Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), decidimos hacer un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que agregamos son: horas trabajadas a la semana, el sexo de los individuos, ocupación, tipo de ocupación y su máximo nivel educativo. 
+Sin embargo, debido a que este modelo tiene un posible problema de endogeneidad (en la medida en la que la edad está correlacionada con otras variables como la educación y la experiencia), se realiza un ejercicio adicional, en el que se incluyen controles con el fin de mejorar la inferencia causal. Las variables explicativas que se agregaron son: horas trabajadas a la semana, el sexo(variable dicotómica que toma el valor de 1 si es hombre), Posición ocupacional, sector,experiencia(medida en años) y escolaridad(medida en años). 
 
-
-En la tabla tal se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles. Se puede observar que, en promedio, un aumento de un año en la edad está asociado con un incremento en el salario del 5.5% (modelo sin controles) y del 6.4% (modelo con controles). Estos resultados muestran que nuestra especificación es robusta en la medida en que los resultados no presentan un gran cambio en magnitud. Sin embargo, debido a que estamos estimando una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque debemos tener en cuenta el $\beta_2$ de la regresión.
+En la tabla 3 se pueden observar los resultados de las estimaciones. La columna 1 muestra los resultados de la estimación sin controles, mientras que la columna 2 presenta la regresión con controles.Se puede apreciar que, en promedio, un año adicional en la edad está asociado con un incremento en el salario del 6.7% (modelo sin controles) y del 14.7% (modelo con controles). Estos estimadores indican que la edad es un factor determinante del salario. Además, la diferencia entre el modelo con controles y sin controles puede obedecer a que el modelo sin controles puede estar sesgado en la medida en la que no condiciona por múltiples variables que afectan los salarios y la edad(por ejemplo, la experiencia y la escolaridad).  Sin embargo, debido a que se estima  una relación no lineal entre la edad y el salario, la interpretación no es tan intuitivamente porque se debe tener en cuenta el $\beta_2$ de la regresión.
 
 
 \input{"../views/fit.tex"}
 
-En cuanto al coeficiente de la variable edad al cuadrado no cambia para ninguno de los modelos. Lo más importante de este coeficiente es su signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, debemos derivar con respecto a la edad: 
+En cuanto al coeficiente de la variable edad al cuadrado, no existe una gran diferencia en magnitud para los dos modelos y coinciden en el signo negativo. Esto indica que hay una relación cóncava entre el salario y la edad, resultado esperado por la teoría. Para poder interpretar correctamente el coeficiente de la edad, se deriva la ecuación estimada con respecto a la edad: 
 
 $$
 \frac{\partial log(salario)}{\partial Edad} =\beta_1  +2 \beta_2 Edad
 $$
 
-Encontramos que la interpretación depende del nivel de edad que se analiza. Para realizar el análisis, estimamos la edad promedio de la base de datos (38 años). Encontramos que, para un individuo con una edad de 38 años, un año adicional está asociado con un aumento en el salario del 1.7%. Para la interpretación del  $\beta_{0}$, sería como el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Aunque esta puede tener una intepretación poco intuitiva, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el salario promedio cuando los individuos inician su vida laboral.  
+La anterior ecuación indica  que la interpretación depende del valor de la edad. Para analizar esta relación, estimamos la edad promedio de la base de datos (39 años). Encontramos que, para un individuo con una edad de 39 años, un año adicional está asociado con un aumento en el salario del 0.93%(para el modelo sin controles) y del 11.32%(para el modelo con controles). La interpretación del  $\beta_{0}$, sería el logaritmo del salario promedio cuando las personas tienen 0 años de edad. Sin embargo, debido a que nuestra muestra está acotada a personas de 18 años, se interpretaría como el logaritmo del salario promedio cuando los individuos inician su vida laboral.  
 
-En cuanto a la interpretación del coeficiente de determinación(r2) nos indica que, aproximadamente, el 2.3%  de la variación del logaritmo del salario es explicada por la edad. Aunque este r2 puede ser bajo, es explicado porque existen muchos más factores que explican el salario. Por esto, cuando vemos el r2 del modelo con controles, encontramos que ell r2 se incrementa hasta aproximadamente el 34%. Sin embargo, estas variables son significativas a un nivel de significancia del 5%, lo que indica que la edad es un determinante del salario. 
+En cuanto a la interpretación del coeficiente de determinación(R2) nos indica que, aproximadamente, el 4.4%  de la variación del logaritmo del salario es explicada por la edad. Aunque este R2 puede ser bajo, es explicado porque existen muchos más factores que determinan el salario. Por esto, cuando se observa el R2 del modelo con controles, se encuentra que el R2 ajustado se incrementa hasta aproximadamente el 47%. Además, tanto la edad como la edad al cuadrado son estadísticamente significativas, lo que indican que existe un buen ajuste del modelo. 
 
-Ahora, vamos a encontrar la edad en la que empiezan a disminuir los ingresos de las personas. Para hacerlo, debemos encontrar el punto máximo de la función que estimamos e igualar a cero. Haciendo el procedimiento, obtenemos que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta ecuación, encontramos que la edad máxima en la que se alcanza el máximo rendimiento de los salarios se alcanzan a los 49.65 años. Este valor es esperado según la literatura (citar literatura). 
+Además, esta regresión permite encontrar el punto de inflexión en el que el rendimiento de la edad sobre el salario comienza a disminuir. Se puede  encontrar el punto máximo de la función que estimamos al derivar la ecuación con respecto a la edad e igualar a cero. Al hacer  el procedimiento, se obtiene que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta expresión, la edad en la que se alcanza el máximo rendimiento de los salarios es a los 45.30 años. 
 
-Para analizar esto mejor, en la figura tal se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se puede observar que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo ingreso a los 49.65 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razaones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
+La figura 1 se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se aprecia que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo rendimiento a los 45 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
 
-En la fráfica anterior también se pueden observar los intervalos de confianza al nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar boortraps, en la que se relizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumeta, esto puede deberse a que existe mucha heterogeneidad de salarios en las personas con edades mayores, porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales, por ejemplo) mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que sus salarios disminuirían. 
-
-```{r echo=FALSE, message=FALSE}
+```{r include_image, echo=FALSE, fig.cap="Perfil de salario - edad",fig.align='center', fig.pos='H'}
 
 knitr::include_graphics('../views/age_earnings_plot.png')
 ```
+
+Adicionalmente, el anterior gráfico también permite observar los intervalos de confianza con un nivel de confianza del 95%. Estos intervalos fueron construidos con errores estándar bootstrap, en la que se realizaron 1000 repeticiones de la regresión sin controles con un resampleo de la muestra para cada repetición. Es importante notar que estos intervalos crecen a medida que la edad aumenta. Una posible explicación es que existe mucha heterogeneidad de salarios en las personas con mayor edad,porque, por ejemplo, existen personas con salarios muy altos (con posiciones gerenciales), mientras que otras personas continuaron con puestos relativamente bajos o que están cerca de la edad de jubilación, por lo que los rendimientos de los ingresos serán bajos.  
 
 
 # Brechas de ingreso por sexo
@@ -211,8 +234,22 @@ Los resultados de la regresión muestran que en promedio, el salario de una muje
 
 
 ```{r code_gap, echo=FALSE}
-gap0 <- lm('log(y_ingLab_m)~woman', data = db)
-gap1 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel+oficio+relab', data = db)
+stats <- arrow::read_parquet("../stores/db.parquet")
+stats <- stats %>% mutate(woman=1-sex,
+                          woman=factor(woman, levels=c(0,1),
+                                       labels=c('Hombre','Mujer')))
+stats$exp <- ifelse(stats$exp<0,0,stats$exp)
+stats <- data.frame(stats%>%
+                      select(c(y_ingLab_m_ha, woman, sector,p6430, exp,
+                               age, esc)))
+stats <- stats%>%mutate(y_ingLab_m_ha=ifelse(is.na(y_ingLab_m_ha), 0.001,
+                                             y_ingLab_m_ha))
+stats <- stats%>%mutate(exp=ifelse(is.na(exp), 22.011,
+                                             exp))
+stats <- stats%>%mutate(esc=ifelse(is.na(esc), 11.430,
+                                   esc))
+gap0 <- lm('log(y_ingLab_m_ha)~woman', data = stats)
+gap1 <- lm('log(y_ingLab_m_ha)~age+woman+esc+p6430+sector', data = stats)
 # gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
 mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
 ```
@@ -252,10 +289,10 @@ Finalmente ejecutamos la segunda regresión univariada `log_wage_res~woman_res` 
 Por otra parte, estimando el modelo con FWL y boostrap se puede apreciar que el valor del gap es el mismo del modelo anterior, es decir, el gap es del 16.54%. Con este obtenemos el mismo valor de gap, sin embargo el valor del error estandar para la estimación con FWL y Boostra es es menor, siendo est de 0.0122. Esta diferencia se da debido aque FWL asume que su modelo es homcedastico, lo cual no es verdadero. 
 
 
-c) 
-```{r echo=FALSE, message=FALSE, out.width="70%" , fig.cap="Perfil de ingresos vs edad por sexo"}
+```{r grap01, echo=FALSE, message=FALSE, out.width="70%" , fig.cap="Perfil de ingresos vs edad por sexo"}
 knitr::include_graphics('../views/earnings_peak_ages.png')
 ```
+
 \begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
 Para identificar las edades en las que tanto hombres como mujeres alcanzan sus mayores ingresos laborales, realizamos dos análisis por separado: uno para hombres y otro para mujeres. Primero, ajustamos modelos de regresión a los datos de cada grupo y luego realizamos las predicciones correspondientes. Se uso la técnica de bootstrap para calcular los valores de los picos de ingresos, representados por la fórmula \[\frac{{-B_1}}{{2 \cdot B_2}}\], junto con sus intervalos de confianza. Los resultados de ambas regresiones son estadísticamente significativos, lo que indica que la edad explica parte de la variabilidad en el logaritmo de los salarios, todavía queda una parte considerable de la variabilidad que no se explica.
@@ -269,24 +306,4 @@ Sin embargo, dado que la gráfica solo considera la edad y el coeficiente de det
 # Referencias bibliográficas
 
 <div id="refs"></div>
-
-# Ejemplos
-
-Para incrustar código y resultados de la consola
-
-```{r cars}
-summary(cars)
-```
-
-Para incluir ecuaciones
-
-$$
-w=f(X)+u
-$$
-
-Para incluir gráficas
-
-```{r echo=FALSE, message=FALSE,file="../scripts/Code.R",fig.align = 'center', fig.cap="Título de la gráfica", dpi=300}
-```
-\begin{center}\footnotesize{Fuente: Cálculos propios a partir de @geih}\end{center}
 
