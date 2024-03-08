@@ -41,7 +41,8 @@ p_load(tidyverse , # tidy-data
        visdat,
        boot,
        papaja,
-       xtable)
+       xtable,
+       survey)
 
 # solve package conflicts
 filter = dplyr::filter
