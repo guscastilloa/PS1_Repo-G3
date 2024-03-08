@@ -7,10 +7,9 @@ author:
 - Jaime Orlando Buitrago González (200612390)
 date: "03 de marzo de 2024"
 output:
-  #html_document:
-    #df_print: paged
-  pdf_document:
+  bookdown::pdf_document2:
     number_sections: true
+    toc: false
     fig_width: 3
     fig_height: 2
     fig_caption: true
@@ -37,6 +36,12 @@ bibliography: References.bib
 ```{r setup, include=FALSE}
 require(here)
 knitr::opts_chunk$set(echo = TRUE, fig.pos = 'H')
+
+fix_textable_ref <- function(refname, tex_table){
+  s <- paste0(fixed("\\caption\\{(\\\\#tab:"), refname, ")")
+  o <- gsub("\\caption\\{", s,tex_table)
+  o
+  }
 
 #source("../scripts/00_packages.R", local = knitr::knit_global())
 #library(ggplot2)
@@ -90,9 +95,11 @@ En la página web se encuentran 10 tablas en formato HTML, las cuales contienen 
 
 Como complemento, se descargaron y unieron las bases de datos de la GEIH de 2018 [@dane], de tal manera que se obtuviesen variables complementarias para el desarrollo del Problem Set. Más específicamente, los años de escolaridad, la rama de actividad \footnote{Código a dos dígitos de la Clasificación Industrial Internacional Uniforme de todas las actividades Económicas (CIIU).} y la pregunta sobre la posición ocupacional de las personas ocupadas. De esta manera, se obtuvieron variables complementarias como escolaridad como variable continua, experiencia laboral \footnote{ Variable *proxy* construida como  Edad-Años de escolaridad-Años de ingreso al sistema educativo (6 años)}, sector económico y posición ocupacional.
 
-Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos. Como los objetivos asociados al uso de los datos tiene fines predictivos, se prescinde de la variable de los factores de expansión, con los cuales se hace inferencias sobre la población. Por consiguiente, en adelante todos los resultados hacen mención a la muestra de la GEIH.
+Finalmente, se filtró la base de datos con las personas mayores de 18 años, quedando en total 16.542 observaciones o personas para el desarrollo del Problem Set. De esta manera, a continuación se presentan las estadísticas descriptivas de las variables utilizadas en los siguientes puntos. 
 
-```{r descriptive_continuos, echo=FALSE, results='asis'}
+Se realizó un ejercicio para evaluar la incidencia sobre el potencial predictivo de incluir los factores de expansión en los modelos (ver Apéndice \@ref(sample-weights)). La estimación puntual de los parámetros no varía mucho en términos de magnitud, y los errores estándar tampoco lo hacen. En vista a que no hay casi incidencia en el error de predicción estimado con o sin los factores de expansión, se prescinde de su inclusión. Por consiguiente, en adelante todos los resultados hacen mención a la muestra de la GEIH.
+
+```{r descriptive-tbl, echo=FALSE, results='asis'}
 
 stats <- arrow::read_parquet("../stores/db.parquet")
 
@@ -108,32 +115,33 @@ stats <- data.frame(stats%>%
                                woman, sector, p6430)))
 
 stats[,1] <- stats[,1]/1000
-
 stargazer(stats[c("y_ingLab_m_ha", "exp", "age", "esc")], 
           type = "latex", median = TRUE, digits =3, 
-          covariate.labels = c("Ingreso laboral (miles)",
+          covariate.labels = c("Ingreso lab. por hora (miles de pesos)",
                           "Experiencia laboral",
                           "Edad",
                           "Años de escolaridad"),
           title="Estadísticas descriptivas. Variables continuas",
           header=FALSE,
-          table.placement = "H")
+          table.placement = "H",
+          label ="tab:descriptive-tbl")
 
 ```
 
 
-Como se observa en la tabla anterior, tres de las cuatro variables por incluir tienen valores perdidos. La variable ingreso laboral con 6.650 observaciones, y experiencia laboral y años de escolaridad con 1 observación. En el primer caso, siguiendo las recomendaciones de @ln, se utilizó una transformación logarítmica del salario sumando una unidad, de tal manera que los valores perdidos puedan ser utilizados. Para las otras dos variables, se remplazaron con los valores promedios, toda vez que representa 1 sola observación y se puede asemejar a un individuo representativo de Bogotá. De esta manera, las distribuciones de estas variables con sus ajustes se observan a continuación:
+Como se observa en el Cuadro \@ref(tab:descriptive-tbl), tres de las cuatro variables por incluir tienen valores perdidos. La variable ingreso laboral con 6.650 observaciones, y experiencia laboral y años de escolaridad con 1 observación. En el primer caso, siguiendo las recomendaciones de @ln, se utilizó una transformación logarítmica del salario sumando una unidad, de tal manera que los valores perdidos puedan ser utilizados. Para las otras dos variables, se remplazaron con los valores promedios, toda vez que representa 1 sola observación y se puede asemejar a un individuo representativo de Bogotá. De esta manera, las distribuciones de estas variables con sus ajustes se observan a continuación:
 
 ```{r grap00, echo=FALSE, message=FALSE, out.width="70%" , message=FALSE, fig.cap="Distribución variables continuas", dpi=300}
 knitr::include_graphics('../views/g1.jpg')
 ```
 \begin{center}\footnotesize{Nota: Líneas azules promedios}\end{center}
 
-Como se observa en las gráficas de distribución anteriores, la población ocupada vive situaciones de desigualdad. El ingreso se concentra en los niveles más bajos y una muy baja concentración en los ingresos más altos. De igual manera, la mayor parte de la población alcanza hasta 11 grados de escolaridad (culminación de la educación media), con una importante acumulación en la población con 9 años (grado noveno). No obstante, la concentración de la población con 16 años de escolaridad (pregrado universitario) muestra la oportunidad que representa el capital humano acumulado de la ciudad.
+Como se observa en las las gráficas de distribución en la Figura \@ref(fig:grap00), la población ocupada vive situaciones de desigualdad. El ingreso se concentra en los niveles más bajos y una muy baja concentración en los ingresos más altos. De igual manera, la mayor parte de la población alcanza hasta 11 grados de escolaridad (culminación de la educación media), con una importante acumulación en la población con 9 años (grado noveno). No obstante, la concentración de la población con 16 años de escolaridad (pregrado universitario) muestra la oportunidad que representa el capital humano acumulado de la ciudad.
 
-En cuanto a la experiencia laboral y la edad tienen una gráfica de distribución similar, dado que la primera es un **proxy** que se construye a partir de la edad y los años de escolaridad. Claro está, para el 2018, se observa que aproximadamente hasta el 75\% de la población ocupada es menor de 50 años, con una caída en la curva en la distribución a partir de los 60 años. Esta situación muestra no sólo que una vez se alcanza la edad de pensión, muchas personas probablemente pasan a ser inactivos, sino también una fuerza laboral ocupada principalmente compuesta por población en edad de trabajar, representando una oportunidad para el desarrollo económico y social de Bogotá.
 
-Como variables relevantes para incluir dentro de los modelos para la predicciones se consideraron la posición ocupacional, el sector y desde luego el sexo, cuyos valores absolutos y proporciones se observan en la siguiente tabla. Como se observa, las mujeres tienen una menor acceso al empleo dentro del mercado laboral en comparación a los hombres, pues son representan el 47\% de la población ocupada. En cuanto al sector económico, predomina el comercio con un 37,7\% de los ocupados en Bogotá, no es fortuito así encontrar una importante participación de los trabajadores por cuenta propia (30,9\%), es decir, dos situaciones que muestran un mercado laboral en el que son propicias las condiciones del empleo informal.
+En cuanto a la experiencia laboral y la edad tienen una gráfica de distribución similar, dado que la primera es un *proxy* que se construye a partir de la edad y los años de escolaridad. Claro está, para el 2018, se observa que aproximadamente hasta el 75\% de la población ocupada es menor de 50 años, con una caída en la curva en la distribución a partir de los 60 años. Esta situación muestra no sólo que una vez se alcanza la edad de pensión, muchas personas probablemente pasan a ser inactivos, sino también una fuerza laboral ocupada principalmente compuesta por población en edad de trabajar, representando una oportunidad para el desarrollo económico y social de Bogotá.
+
+Como variables relevantes para incluir dentro de los modelos para la predicciones se consideraron la posición ocupacional, el sector y desde luego el sexo, cuyos valores absolutos y proporciones se observan en la siguiente tabla. Como se observa, las mujeres tienen una menor acceso al empleo dentro del mercado laboral en comparación a los hombres, pues representan el 47\% de la población ocupada. En cuanto al sector económico, predomina el comercio con un 37,7\% de los ocupados en Bogotá, no es fortuito así encontrar una importante participación de los trabajadores por cuenta propia (30,9\%), es decir, dos situaciones que muestran un mercado laboral en el que son propicias las condiciones del empleo informal.
 
 
 ```{r descriptive_categorical, echo=FALSE, results='asis'}
@@ -159,7 +167,7 @@ papaja::apa_table(
 
 ```
 
-En su conjunto, los ocupados se emplean en las actividades económicas asociadas a Servicios representan el 84,1\% de la población ocupada, por su parte quienes se dedican a las actividades a producción de Bienes son el 15,9\% de la población ocupada. Como un equilibrio desde el punto de vista de la oferta, es factible pensar una participación similar de la demanda, es decir, un tejido empresarial bogotano compuesto principalmente por actividades económicas asociadas a los Servicios en la ciudad de Bogotá.
+En su conjunto, los ocupados que en las actividades económicas asociadas a Servicios representan el 84,1\% de la población ocupada, por su parte quienes se dedican a las actividades a producción de Bienes son el 15,9\% de la población ocupada. Como un equilibrio desde el punto de vista de la oferta, es factible pensar una participación similar de la demanda, es decir, un tejido empresarial bogotano compuesto principalmente por actividades económicas asociadas a los Servicios en la ciudad de Bogotá.
 
 Finalmente, en esta sección de descripción de variables se realizaron gráficas de dispersión de las variables por incluir en los modelos frente al ingreso laboral por horas. En el siguiente conjunto de gráficos, se encuentran los gráficos de dispersión de la Experiencia laboral, Años de escolaridad y Sexo, además se encuentran en azul los promedios según cada nivel de las variables en el eje $X$. Como se observa, las relaciones entre las variables no son lineales, lo cual como se verá más adelante implica incluir en los modelos polinomios y conseguir un mejor ajuste.
 
@@ -170,12 +178,15 @@ knitr::include_graphics('../views/g2_1.jpg')
 \begin{center}\footnotesize{Nota: Puntos azules romedio condicional}\end{center}
 
 # Modelo
-Para realizar la predicción salarial, el principal objetivo de este problem set es construir un modelo de ingreso laboral por hora de los habitantes de Bogotá mayores de 18 años. Por lo tanto, la ecuación que se estimará es la siguiente: 
+Para realizar la predicción salarial, el principal objetivo de este problem set es construir un modelo de ingreso laboral por hora de los habitantes de Bogotá mayores de 18 años. Por lo tanto, para explorar la relación 
 
 $$
-log(salario_i) = f(X) + u_i 
+\log(salario_i) = f(X) + u_i 
 $$
-Dónde $log(salario_i)$ es el salario por hora para cada individuo $i$,$X$ es una matrix de variables que explican el salario. Para nuestro modelo, se seleccionaron como posibles predictoras las horas trabajadas a la semana(en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo(hay evidencia de que existe una brecha salarial entre hombres y mujeres), Posición ocupacional(los salarios dependen de la posición organizacional de las personas), sector(existen sectores con mayores rendimientos que otros), experiencia(las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y escolaridad(en la medida que las personas tienen mayor capacitación). Finalmente, los $\beta$ representan un  vector de parámetros que cuantifican la relación entre las variables $X$ y los salarios. 
+asumiremos que $f(X)$ es una función lineal de la forma $\log(salario)=\boldsymbol{\beta X}$.
+Las variables predictoras que definiremos son: 
+<!-- #pendiente -->
+Dónde $\log(salario_i)$ es el logaritmo del salario por hora para cada individuo $i$, $X$ es una matriz de variables que explican el salario. Para nuestro modelo, se seleccionaron como posibles predictoras las horas trabajadas a la semana(en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo (hay evidencia de que existe una brecha salarial entre hombres y mujeres), Posición ocupacional (los salarios dependen de la posición organizacional de las personas), sector (existen sectores con mayores rendimientos que otros), experiencia (las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y escolaridad (en la medida que las personas tienen mayor capacitación). Finalmente, los $\beta$ representan un  vector de parámetros que cuantifican la relación entre las variables $X$ y los salarios. 
 
 
 # Perfiles de salario por edad
@@ -187,7 +198,7 @@ Una de las posibles explicaciones de este suceso está relacionado con la produc
 Estudiar la relación entre estas variables permite realizar un perfilamiento de los ingresos por grupos de edad,lo cuál puede contribuir a calcular con mayor precisión los impuestos que debe pagar cada indivuo e identificar personas en situación de vulnerabilidad con el fin de focalizar programas de ayuda. Por tal motivo, se plantea estimar la siguiente regresión por medio de Mínimos Cuadrados Ordinarios para analizar esta relación: 
 
 $$
-log(salario_i)=\beta_0{}+\beta_1 Edad +\beta_2  Edad^2 +u_i
+log(salario_i)=\beta_0{}+\beta_1 Edad_i +\beta_2  Edad_i^2 +u_i
 $$
 Dónde $Salario_i$ corresponde a los ingresos vía salarios por hora. Se realiza la transformación logarítmica con el fin de facilitar la interpretación de los coeficientes de la regresión. La $Edad$ y la $Edad^2$ corresponden a la edad y el cuadrado de la edad para cada individuo $i$. La inclusión del término cuadrático permite modelar la relación en u invertida entre salarios y la edad y el término $u_i$ corresponde al término error idiosincrático, que representa las variables que no están en nuestro modelo y que explican los salarios. 
 
@@ -210,9 +221,9 @@ En cuanto a la interpretación del coeficiente de determinación(R2) nos indica 
 
 Además, esta regresión permite encontrar el punto de inflexión en el que el rendimiento de la edad sobre el salario comienza a disminuir. Se puede  encontrar el punto máximo de la función que estimamos al derivar la ecuación con respecto a la edad e igualar a cero. Al hacer  el procedimiento, se obtiene que esta edad máxima está dada por: $edad_{max}=-\beta_1/2\beta_2$. Reemplazando estos valores en esta expresión, la edad en la que se alcanza el máximo rendimiento de los salarios es a los 45.30 años. 
 
-La figura 1 se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se aprecia que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo rendimiento a los 45 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
+En la Figura \@ref(fig:plot-age-earnings) se puede observar la relación entre la edad y los salarios. En la primera mitad de la gráfica, se aprecia que aumentan los salarios a medida que aumenta la edad. Esto es explicado debido a que las personas cuentan con cada vez más experiencia y habilidades, hasta llegar a su máximo rendimiento a los 45 años, en los que los incrementos comienzan a disminuir hasta niveles más bajos que los incrementos al comienzo de su vida laboral. Como se discutió al principio de la sección, puede deberse a múltiples razones como un retraso en el aprendizaje de nuevas habilidades por la reducción de capacidad cognitiva, lo que implica tener más dificultad para ascender o encontrar empleos con mayores ingresos.  
 
-```{r include_image, echo=FALSE, fig.cap="Perfil de salario - edad",fig.align='center', fig.pos='H'}
+```{r plot-age-earnings, echo=FALSE, fig.cap="Perfil de salario - edad",fig.align='center', fig.pos='H'}
 
 knitr::include_graphics('../views/age_earnings_plot.png')
 ```
@@ -226,7 +237,7 @@ a) En esta sesión se intenta predecir la brecha salarial del logaritmo del ingr
 
 
 \begin{equation}
-\ln (w) = \beta_1 + \beta_2 Mujer+u
+\ln (salario_i) = \beta_1 + \beta_2 Mujer_i+u_i
   \label{gap0}
 \end{equation}
 
@@ -324,7 +335,7 @@ Solo Sexo & 0.72 & 6924 &   1 \\
   Controles 3 v2 & 0.45 & 6807 & 128 \\ 
    \bottomrule
 \end{tabular}
-\caption{Comparación RMSE con 70% muestra de entrenamiento} 
+\caption{Comparación RMSE con 70\% muestra de entrenamiento} 
 \end{table}
 
 
@@ -337,3 +348,29 @@ Solo Sexo & 0.72 & 6924 &   1 \\
 
 <div id="refs"></div>
 
+
+# Apéndice 
+## Factor de Expansión {#sample-weights}
+
+Para probar la incidencia de incluir los factores de expansión en los modelos predictivos se realizó un ejercicio en el que se estimó el 
+modelo $\log(salaario_i)=\beta_0+\beta_1 Sexo_i + \beta_2 Edad_i + \beta_3 Edad_i^2+u_i$ tres veces: usando el paquete `glm`
+con y sin el argumento de pesos `weights`, y usando la función `survey::svyglm`.
+```{r tab:a1-tbl, results='asis', echo=FALSE}
+regression_table <- readLines(con ="../views/a1-fit.tex", encoding = 'UTF-8')
+regression_table <- fix_textable_ref(refname = "a1-tbl", tex_table = regression_table)
+cat(regression_table[-11], sep = '\n')
+```
+
+La inclusión de los factores de expansión, al usarse con el comando `svyglm` que interpreta los pesos como pesos de muestreo proveen el menor error de predicción estimado (ver Cuadro \@ref(tab:a1-xtbl)), pero el aumento del error al estimar sin los factores de expansión es menor al 1%. Además, ni los coeficientes ni la precisión de los mismos varía al incluir los factores de expansión (Cuadro \@ref(tab:a1-tbl)). Una razón para este fenómeno puede ser que nuestra submuestra de la GEIH es relativamente homogénea en términos del factor de expansión, en comparación a la muestra completa (Cuadro \@ref(tab:a1-moments)).
+
+```{r tab:a1-xtbl, results='asis', echo=FALSE}
+out_table <- readLines(con ="../views/a1-cverror.tex", encoding = 'UTF-8')
+out_table <- fix_textable_ref(refname = "a1-xtbl", tex_table = out_table)
+cat(out_table, sep = '\n')
+```
+
+```{r tab:a1-moments, results='asis', echo=FALSE}
+sw_tbl <- readLines(con ="../views/a1-moments.tex", encoding = 'UTF-8')
+sw_tbl <- fix_textable_ref(refname = "a1-moments", tex_table = sw_tbl)
+cat(sw_tbl, sep = '\n')
+```
