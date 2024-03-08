@@ -12,7 +12,7 @@ source("scripts/00_packages.R")
 gc()
 
 #Cargar la base de datos 
-datos_geih<-read_parquet("stores/db.parquet")
+datos_geih<-arrow::read_parquet("stores/db.parquet")
 
 
 #Definir los posibles predictores de la base de datos: 
