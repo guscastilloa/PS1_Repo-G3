@@ -80,7 +80,7 @@ de los impuestos. En Indonesia, a través de modelos predictivos se identificaro
 
 Es por tanto, que en este Problem Set busca predecir el ingreso por hora de los y las bogotanas mediante modelos que aprovechan las herramientas del ML, haciendo uso de la principal encuesta de hogares colombiana.  Más específicamente, se utilizó la *Medición de Pobreza Monetaria y Desigualdad* [@geih] del 2018 para Bogotá, un módulo de la *Gran Encuesta Integrada de Hogares* (GEIH) del DANE, la cual no sólo proporciona información sobre el mercado laboral, ingreso de las personas, características socioeconómicas y territoriales, si no a su vez representa una fuente de información confiable en la cual las personas no tienen incentivos a reportar información falsa sobre su ingreso, pues la encuesta es anónima y no tiene una finalidad tributaria.
 
-En este contexto, el presente documento explora diferentes estimaciones de los salarios a partir modelos de regresión por minimos cuadrados ordinarios, Frisch-Waugh-Lovell (FWL) y Leave-one-out-cross-validation (LOOCV). A través de los resultados empíricos y prácticos se obtienes resultados susceptibles de ser aplicados.
+Así, se busca aquí explorar diferentes especificaciones entre el salario y sus determinantes. Estudiaremos el papel de la edad, la educaicón y del sexo en esta relación, profundizando en la forma como incluir las diferentes ocupaciones/oficios influyen en los resultados [@mincerInvestmentHumanCapital1958]. 
 
 
 # Datos
