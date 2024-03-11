@@ -76,3 +76,5 @@ geih <- merge(viviendas,geih,
                     suffixes = "")  
 
 arrow::write_parquet(geih, sink = "stores/geih18.parquet")
+
+# End

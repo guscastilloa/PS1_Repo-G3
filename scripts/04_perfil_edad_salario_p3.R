@@ -12,28 +12,23 @@ source("scripts/00_packages.R")
 gc()
 
 #Cargar la base de datos 
-datos_geih<-arrow::read_parquet("stores/db.parquet")
+db<-arrow::read_parquet("stores/db.parquet")
 
 
 #Definir los posibles predictores de la base de datos: 
-geih_select <- datos_geih  %>% select(y_total_m_ha, y_ingLab_m_ha,
-                                      hoursWorkUsual,age,sex,oficio,
-                                      relab,college,ocu,maxEducLevel,
+geih_select <- db  %>% select(ln_wage, y_total_m_ha, y_ingLab_m_ha,
+                                      hoursWorkUsual,age,female,oficio,
+                                      college,ocu,maxEducLevel,
                                       formal,microEmpresa,p6050,p6210,
-                                      p6430, sector,exp, age, esc,ocu)
+                                      posicion, sector,exp, age, agesqr, esc)
 
 #Eliminar las observaciones que tienen ingresos laborales cero. 
 geih_select<-na.omit(geih_select)
 
-#Creación del ingreso como logaritmo y de la edad al cuadrado. 
-geih_select<- geih_select  %>% mutate(agesqr=age*age,
-                                      ln_wage=log(y_ingLab_m_ha))
-
-
 #1 - REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u (también le vamos a agregar
 #algunas variables explicativas adicionales)
-reg_age_c <- lm(ln_wage ~ age + agesqr+ hoursWorkUsual+age+sex+as.factor(sector)+
-                  as.factor(p6430)+exp+esc, geih_select)
+reg_age_c <- lm(ln_wage ~ age + agesqr+female+hoursWorkUsual+sector+
+                  posicion+exp+esc, geih_select)
 summary(reg_age_c)
 
 #2 - Regresión: Log(wage)=b1 + b2(age) + b3(age)^2 + u (sin controles)
@@ -83,7 +78,7 @@ edad_peak<-(-coeficiente_edad/(2*coeficiente_edad2))
 edad_peak
 
 #Calcular el promedio de la edad 
-mean(datos_geih$age)
+mean(db$age)
 #Con controles
 media_edad_c<-(coeficiente_edad_c+(2*coeficiente_edad_c2*39))*100
 media_edad_c

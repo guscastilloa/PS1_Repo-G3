@@ -19,8 +19,6 @@ gc()
 stats <- arrow::read_parquet("stores/db.parquet")
 
 
-stats$exp <- ifelse(stats$exp<0,0,stats$exp)
-
 stats <- data.frame(stats%>%
                       select(c(y_ingLab_m_ha, exp, age, esc)))
 

@@ -23,11 +23,9 @@ stats <- stats %>% mutate(woman=1-sex,
                                        labels=c('Hombre','Mujer'))
                     )
 
-stats$exp <- ifelse(stats$exp<0,0,stats$exp)
-
 stats <- data.frame(stats%>%
                       select(c(y_ingLab_m_ha, exp, age, esc, 
-                               woman, sector, p6430)))
+                               woman, sector, hoursWorkUsual)))
 
 stats <- stats%>%mutate(exp=ifelse(is.na(exp), 22.011,
                                    exp))
@@ -44,7 +42,10 @@ stats <- stats%>%group_by(exp)%>%
   group_by(esc)%>%
   mutate(y3=mean(y_ingLab_m_ha, na.rm = TRUE))%>%ungroup()%>%
   group_by(woman)%>%
-  mutate(y4=mean(y_ingLab_m_ha, na.rm = TRUE))%>%ungroup()
+  mutate(y4=mean(y_ingLab_m_ha, na.rm = TRUE))%>%ungroup()%>%
+  group_by(hoursWorkUsual)%>%
+  mutate(y5=mean(y_ingLab_m_ha, na.rm = TRUE))%>%ungroup()
+
   
 ############################################################################-
 # 1. Database preparation ----
@@ -71,10 +72,11 @@ g3 <- ggplot(stats, aes(x=esc))+
   labs(title="Años de escolaridad", y="Ingreso (ln)")+
   theme_bw()
 
-g4 <- ggplot(stats, aes(x=woman))+
+g4 <- ggplot(stats, aes(x=hoursWorkUsual))+
   geom_point(aes(y=y_ingLab_m_ha),alpha=0.2)+
-  geom_point(aes(y=y4), colour="blue", size=2, alpha=0.7)+
-  labs(title="Sexo")+
+  geom_point(aes(y=y5), colour="blue", size=1.5, alpha=0.2)+
+  facet_grid(~woman)+
+  labs(title="Horas semanales trabajadas")+
   theme_bw()
 
 ggpubr::ggarrange(g1+rremove("xlab"), 

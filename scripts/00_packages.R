@@ -41,6 +41,7 @@ p_load(tidyverse , # tidy-data
        visdat,
        boot,
        papaja,
+       caret,
        xtable,
        survey)
 
