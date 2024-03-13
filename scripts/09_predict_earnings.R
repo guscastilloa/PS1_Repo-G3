@@ -13,13 +13,14 @@ rm (list=ls())
 gc()
 source("scripts/00_packages.R")
 p_load(leaps, stats, MASS, boot, caret, rio, dplyr, arrow, doSNOW, 
-       foreach, doParallel)
+       foreach, doParallel, moments)
 ############################################################################-
 # 1. Prepare dataset ----
 ############################################################################-
-db <- read_parquet("https://github.com/guscastilloa/PS1_Repo-G3/blob/135ee86dcd92c1f0ef52a9fb73c214a1f3e92338/stores/db.parquet")
+# db <- read_parquet("https://github.com/guscastilloa/PS1_Repo-G3/blob/135ee86dcd92c1f0ef52a9fb73c214a1f3e92338/stores/db.parquet")
 db <- read_parquet("stores/db.parquet")
-db <- db %>% select(ln_wage, y_total_m_ha, y_ingLab_m_ha,
+db <- db %>% unite(unique_id,c(directorio, secuencia_p, orden))
+db <- db %>% select(unique_id,ln_wage, y_total_m_ha, y_ingLab_m_ha,
                     hoursWorkUsual,age,female,oficio,ocu,maxEducLevel,
                     formal,microEmpresa,p6050,p6210,
                     posicion, sector,exp, age, agesqr, esc)
@@ -33,7 +34,7 @@ f4 <- as.formula(ln_wage~age+agesqr+female+esc+hoursWorkUsual+formal+
                               sector+oficio+microEmpresa)
 
 # Variations
-f2v <- as.formula(ln_wage ~ poly(age, 15, raw=TRUE))
+f2v <- as.formula(ln_wage ~ age+agesqr+esc)
 f3v <- as.formula(ln_wage ~ female+age+agesqr+female:poly(age,15,raw=TRUE)+poly(esc,3))
 f4v1 <- as.formula(ln_wage~poly(age,6, raw=TRUE)+female+female:age+esc+
                     hoursWorkUsual+formal+sector+oficio+microEmpresa+female:formal+
@@ -105,10 +106,45 @@ tbl1 <- data.frame("Especificación"=c("Solo Sexo", "Edad + Edad²", "Sexo,Edad,
                                      )
            ); tbl1
 
-xtbl1 <- xtable(tbl1, caption = "Comparación RMSE con 70% muestra de entrenamiento")
+xtbl1 <- xtable(tbl1, caption = "Comparación RMSE", digits=3)
 names(xtbl1) <- c("Especificación", "Test RMSE", "Grados de Libertado", "Número de Predictores")
 print.xtable(xtbl1, booktabs = TRUE, file = "views/validation_set_rmse.tex",
              include.rownames = FALSE, include.colnames = T)
+
+
+## Prediction error distribution -------
+pred_errors <- (db.test$ln_wage-predict(lm.fit5v, db.test))
+squared_errors <- (db.test$ln_wage-predict(lm.fit5v, db.test))^2
+db.test <-  db.test %>% mutate(
+  y_hat=predict(lm.fit5v, db.test),
+  pred_errors=pred_errors,
+  sq_errors=squared_errors,
+  type_pred_error=ifelse(pred_errors>0,"Subestimado",
+                         ifelse(pred_errors<0,"Sobreestimado","Perfecto"))
+)
+write_parquet(db.test %>% select(unique_id,y_hat,ln_wage, pred_errors, sq_errors,type_pred_error),
+              sink = "stores/db_30_test.parquet")
+
+moments::skewness(db.test$squared_errors)
+
+ggplot(data =filter(db.test, squared_errors>1) ,
+       aes(x=y_ingLab_m_ha))+
+  geom_density()+
+  theme_bw()+
+  facet_grid(~type_pred_error, scales = 'free')
+
+
+## Leverage statistics (STUCK)
+lm.fit5v.2 <- caret::train(f4v3,data = db.train, method = 'lm', )
+lm.fit5v.1 <- caret::train(f4v3,data = db, subset = train, method = 'lm')
+lm.fit.1 <- lm(f4v3, data = db, subset = train)
+
+tail(summary(lm.fit.1)$coefficients,2)
+tail(summary(lm.fit5v.1)$coefficients,2)
+
+predict(lm.fit.1, db[-train,])
+predict(lm.fit5v.1, db[-train,])
+predict(lm.fit5v.2, db[-train,])
 
 ############################################################################-
 # 2. LOOCV ----
@@ -123,7 +159,7 @@ doParallel::registerDoParallel(cluster)
 ctrl <- caret::trainControl(method = 'LOOCV', allowParallel = TRUE)
 
 start_time <- Sys.time()
-small.crt.mse <- caret::train(f4, data = db, method = 'lm', trControl=ctrl)
+small.crt.mse <- caret::train(f4v2, data = db, method = 'lm', trControl=ctrl)
 end_time <- Sys.time()
 
 crt.rmse <- RMSE(small.crt.mse$pred$pred, db$ln_wage)
@@ -141,6 +177,10 @@ unregister_dopar <- function() {
 }
 unregister_dopar()
 
+print("Logró guardar f4v2!!! *******************************************")
+print(crt.rmse)
+cat("---------------------------------------------------------\n\n\n\n")
+
 
 
 
@@ -155,7 +195,7 @@ start_time <- Sys.time()
 small.crt.mse <- train(f4v3, data = db, method = 'lm', trControl=ctrl)
 end_time <- Sys.time()
 
-crt.rmse <- RMSE(small.crt.mse$pred$pred, db$ln_wage)
+crt.rmse_f4v3 <- RMSE(small.crt.mse$pred$pred, db$ln_wage)
 
 time.small.crt <- end_time - start_time
 print(time.small.crt)
@@ -164,3 +204,14 @@ print(time.small.crt)
 
 parallel::stopCluster(cluster)
 unregister_dopar()
+
+print("************ successs ***********************************")
+
+# Export 
+saveRDS(loocv,"stores/loocv.rds")
+
+
+loocv <- tibble(
+  "Modelo"=c("Contorles v2", "Controles v3"),
+  "Test Error LOOCV"=c(crt.rmse, crt.rmse_f4v3)
+)
