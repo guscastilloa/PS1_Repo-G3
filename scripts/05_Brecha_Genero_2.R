@@ -3,7 +3,7 @@
 # Authors: Jorge Luis Congacha Yunda
 # Descripción: Brecha salarial
 ###############################################################################-
-
+###############################################################################
 # Prepare workspace
 rm (list=ls())
 source("scripts/00_packages.R")
