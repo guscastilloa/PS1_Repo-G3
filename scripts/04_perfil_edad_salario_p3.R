@@ -25,6 +25,26 @@ geih_select <- db  %>% select(ln_wage, y_total_m_ha, y_ingLab_m_ha,
 #Eliminar las observaciones que tienen ingresos laborales cero. 
 geih_select<-na.omit(geih_select)
 
+# Bad Controls check:
+db <- read_parquet("stores/db.parquet")
+## checking "posicion"  -----
+anova <-aov(formula = esc~posicion, data = db)
+summary(anova)
+T <- TukeyHSD(anova)
+Tdf <- as.data.frame(T$posicion) %>% mutate(p_round=round(`p adj`, 5))
+Tdf  %>%  filter(`p adj`<0.05)
+# Anderson-Darling test for normality
+library(nortest)
+db %>% 
+  filter(posicion!="Jornalero o Peón") %>%
+  group_by(posicion) %>%
+  summarise(n=n(),
+            mu = mean(esc, na.rm=T),
+            p50=median(esc),
+            desvest = sd(esc),
+            p_val = round(ad.test(esc)$p.value, digits = 6))
+
+
 #1 - REGRESIÓN : log(wage) = b1 + b2(age) + b3(age)^2 + u (también le vamos a agregar
 #algunas variables explicativas adicionales)
 reg_age_c <- lm(ln_wage ~ age + agesqr+female+hoursWorkUsual+sector+

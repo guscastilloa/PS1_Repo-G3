@@ -183,7 +183,9 @@ Para realizar la predicción salarial, el principal objetivo de este problem set
 
 $$
 \log(salario_i) = f(X) + u_i 
-$$ asumiremos que $f(X)$ es una función lineal de la forma $\log(salario)=\boldsymbol{\beta X}$. Las variables predictoras que definiremos son: <!-- #pendiente --> Dónde $\log(salario_i)$ es el logaritmo del salario por hora para cada individuo $i$, $X$ es una matriz de variables que explican el salario. Para nuestro modelo, se seleccionaron como posibles predictoras las horas trabajadas a la semana(en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo (hay evidencia de que existe una brecha salarial entre hombres y mujeres), Posición ocupacional (los salarios dependen de la posición organizacional de las personas), sector (existen sectores con mayores rendimientos que otros), experiencia (las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y escolaridad (en la medida que las personas tienen mayor capacitación). Finalmente, los $\beta$ representan un vector de parámetros que cuantifican la relación entre las variables $X$ y los salarios.
+$$
+asumiremos que $f(X)$ es una función lineal de la forma $\log(salario)=\boldsymbol{\beta X}$. Dónde $\log(salario_i)$ es el logaritmo del salario por hora para cada individuo $i$, $X$ es una matriz de variables que explican el salario. Para nuestro modelo, se seleccionaron como variables predictivas las horas trabajadas a la semana (en la medida en que los ingresos salariales dependen de la cantidad de horas trabajadas), el sexo (hay evidencia de que existe una brecha salarial entre hombres y mujeres), el sector (existen sectores con mayores rendimientos que otros), experiencia (las personas con mayor experiencia pueden contar con mayores habilidades que personas con menores años de experiencia) y la escolaridad (en la medida que las personas tienen mayor capacitación). Dado que la posición ocupacional que tenga un empleado es en sí misma un resultado de las mismas variables predictivas que estamos incluyendo, e.g. las posiciones sufren en sí mismas de autoselección, no se tendrá en cuenta como variable predictiva. Esta dependencia se revisó mediante una prueba ANOVA que, a pesar de cumplir solo uno de los dos supuestos necesarios para la ANOVA se cumplen (dentro de 7 de los 8 grupos la escolaridad es normal al 5%, pero la varianza es diferente entre grupos al 1% de significancia), arroja que la posición y la escolaridad no son independientes (p-valor<0.01). 
+
 
 # Perfiles de salario por edad
 
@@ -243,8 +245,8 @@ stats <- stats %>% mutate(woman=1-sex,
                                        labels=c('Hombre','Mujer')))
 stats$exp <- ifelse(stats$exp<0,0,stats$exp)
 stats <- data.frame(stats%>%
-                      select(c(y_ingLab_m_ha, woman, sector,posicion, exp,
-                               age, esc)))
+                      select(c(y_ingLab_m_ha, woman, sector,microEmpresa, exp,
+                               age, esc,formal,oficio)))
 stats <- stats%>%mutate(y_ingLab_m_ha=ifelse(is.na(y_ingLab_m_ha), 0.001,
                                              y_ingLab_m_ha))
 stats <- stats%>%mutate(exp=ifelse(is.na(exp), 22.011,
@@ -252,7 +254,7 @@ stats <- stats%>%mutate(exp=ifelse(is.na(exp), 22.011,
 stats <- stats%>%mutate(esc=ifelse(is.na(esc), 11.430,
                                    esc))
 gap0 <- lm('log(y_ingLab_m_ha)~woman', data = stats)
-gap1 <- lm('log(y_ingLab_m_ha)~age+woman+esc+posicion+sector', data = stats)
+gap1 <- lm('log(y_ingLab_m_ha)~age+I(age^2)+woman+esc+sector+formal+oficio+microEmpresa', data = stats)
 # gap2 <- lm('log(y_ingLab_m)~age+woman+maxEducLevel', data = db)
 mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
 ```
@@ -260,9 +262,9 @@ mean_wage_female <- exp(gap0$coefficients[[1]]+gap0$coefficients[[2]])
 ```{r code_gap_sex, echo=FALSE}
 #source(here::here("scripts", "00_packages.R"))
 #source(here::here("scripts", "04_Brecha_Genero_2.R"))
-geih_select <- arrow::read_parquet("../stores/geih_select.parquet")
-reg1 <- lm(ln_wage ~ sex, data = geih_select)
-reg2 <- lm(ln_wage ~ sex+posicion+oficio+ocupacion+formal+microEmpresa+maxEducLevel+edad, data = geih_select)
+geih_select <- arrow::read_parquet("../stores/db.parquet")
+reg1 <- lm(ln_wage ~ female, data = geih_select)
+reg2 <- lm(ln_wage ~ female+age+agesqr+oficio+formal+microEmpresa+sector+esc, data = geih_select)
 mean_wage_female <- exp(reg1$coefficients[[1]]+reg1$coefficients[[2]])
 ```
 
@@ -270,7 +272,7 @@ mean_wage_female <- exp(reg1$coefficients[[1]]+reg1$coefficients[[2]])
 stargazer(gap0,gap1, 
           title = "Estimando brecha de género",
           type='latex', dep.var.labels = "Ln Salario",
-          omit = c('oficio','maxEducLevel'), 
+          omit = c('oficio','esc', 'sector'), 
           notes = "Controles: oficio, maxEduclevel", 
           header = FALSE,
           table.placement = "H")
