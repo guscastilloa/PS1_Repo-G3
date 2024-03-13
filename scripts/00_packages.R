@@ -43,6 +43,7 @@ p_load(tidyverse , # tidy-data
        papaja,
        caret,
        xtable,
+       moments,
        survey)
 
 # solve package conflicts
